@@ -111,6 +111,9 @@ const screens = {
   'letters-menu': document.getElementById('letters-menu'),
   'letters-learn': document.getElementById('letters-learn'),
   'letters-test': document.getElementById('letters-test'),
+  'phonics-menu': document.getElementById('phonics-menu'),
+  'phonics-learn': document.getElementById('phonics-learn'),
+  'phonics-test': document.getElementById('phonics-test'),
 };
 
 function showScreen(id) {
@@ -124,6 +127,7 @@ document.querySelectorAll('[data-app]').forEach(btn => {
     const app = btn.dataset.app;
     if (app === 'counting') showScreen('counting-menu');
     else if (app === 'letters') showScreen('letters-menu');
+    else if (app === 'phonics') showScreen('phonics-menu');
   });
 });
 
@@ -153,6 +157,21 @@ document.querySelectorAll('[data-letters-mode]').forEach(btn => {
       showScreen('letters-test');
       lettersResetScore();
       nextLettersTestRound();
+    }
+  });
+});
+
+// phonics mode picker -> learn / test
+document.querySelectorAll('[data-phonics-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.phonicsMode;
+    if (mode === 'learn') {
+      showScreen('phonics-learn');
+      phonicsShow(0);
+    } else if (mode === 'test') {
+      showScreen('phonics-test');
+      phonicsResetScore();
+      nextPhonicsTestRound();
     }
   });
 });
@@ -300,7 +319,7 @@ function celebrate() {
 
   // confetti
   confettiEl.innerHTML = '';
-  const pieces = [...DINOS, ...EXTRAS, '🎉', '✨', '🌟'];
+  const pieces = [...EXTRAS, '🎉', '✨', '🌟'];
   for (let i = 0; i < 22; i++) {
     const s = document.createElement('span');
     s.textContent = pieces[Math.floor(Math.random() * pieces.length)];
@@ -413,6 +432,189 @@ function handleLetterChoice(btn, value) {
     say(`Yes! Letter ${name}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
     setTimeout(nextLettersTestRound, 1800);
+  } else {
+    btn.classList.add('wrong');
+    say(`Try again!`, { rate: 0.95, pitch: 1.2 });
+    setTimeout(() => btn.classList.remove('wrong'), 600);
+  }
+}
+
+// ====== PHONICS LEARN MODE ======
+// Sequenced TTS helpers — needed so each letter sound can finish before
+// the next one starts (and the matching letter box can highlight).
+function sayAsync(text, opts = {}) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) return resolve();
+    const u = new SpeechSynthesisUtterance(text);
+    if (preferredVoice) u.voice = preferredVoice;
+    u.rate   = opts.rate   ?? 0.8;
+    u.pitch  = opts.pitch  ?? 1.2;
+    u.volume = opts.volume ?? 1;
+    // Resolve on both end and error — speechSynthesis.cancel() fires
+    // onerror in some browsers, onend in others. Either way, unblock.
+    u.onend = u.onerror = () => resolve();
+    speechSynthesis.speak(u);
+  });
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+let phonicsIdx = 0;
+// Monotonic id so a stale speak-loop from the previous card can detect
+// that it's been superseded and stop touching the DOM.
+let phonicsPlayToken = 0;
+
+const phonicsLettersEl = document.getElementById('phonics-letters');
+const phonicsEmojiEl   = document.getElementById('phonics-emoji');
+const phonicsWordEl    = document.getElementById('phonics-word');
+const phonicsCardEl    = document.getElementById('phonics-card');
+
+function phonicsShow(idx) {
+  const total = window.PHONICS_WORDS.length;
+  phonicsIdx = ((idx % total) + total) % total;
+  const item = window.PHONICS_WORDS[phonicsIdx];
+
+  // Build the row of letter boxes (each tappable to play just its sound)
+  phonicsLettersEl.innerHTML = '';
+  item.word.split('').forEach((ch, i) => {
+    const box = document.createElement('div');
+    box.className = 'phonics-letter';
+    box.textContent = ch;
+    box.style.animationDelay = `${i * 0.08}s`;
+    box.addEventListener('click', () => playSingleSound(item, i));
+    phonicsLettersEl.appendChild(box);
+  });
+
+  phonicsEmojiEl.textContent = item.emoji;
+  phonicsWordEl.textContent  = item.word.charAt(0) + item.word.slice(1).toLowerCase();
+
+  // retrigger emoji pop
+  phonicsEmojiEl.style.animation = 'none';
+  void phonicsEmojiEl.offsetWidth;
+  phonicsEmojiEl.style.animation = '';
+
+  // retrigger card pop
+  phonicsCardEl.classList.remove('pop');
+  void phonicsCardEl.offsetWidth;
+  phonicsCardEl.classList.add('pop');
+
+  speakPhonicsWord(item);
+}
+
+async function speakPhonicsWord(item) {
+  speechSynthesis.cancel();
+  const token = ++phonicsPlayToken;
+  const letters = phonicsLettersEl.querySelectorAll('.phonics-letter');
+
+  // Sound out each letter while highlighting the matching box
+  for (let i = 0; i < item.sounds.length; i++) {
+    if (token !== phonicsPlayToken) return;
+    if (letters[i]) letters[i].classList.add('active');
+    await sayAsync(item.sounds[i], { rate: 0.6, pitch: 1.25 });
+    if (token !== phonicsPlayToken) return;
+    if (letters[i]) letters[i].classList.remove('active');
+    await sleep(180);
+  }
+
+  if (token !== phonicsPlayToken) return;
+  // Then say the whole word with all boxes lit
+  letters.forEach(l => l.classList.add('active'));
+  await sleep(160);
+  await sayAsync(item.word, { rate: 0.9, pitch: 1.3 });
+  if (token !== phonicsPlayToken) return;
+  letters.forEach(l => l.classList.remove('active'));
+}
+
+async function playSingleSound(item, i) {
+  speechSynthesis.cancel();
+  const token = ++phonicsPlayToken;
+  const letters = phonicsLettersEl.querySelectorAll('.phonics-letter');
+  if (letters[i]) letters[i].classList.add('active');
+  await sayAsync(item.sounds[i], { rate: 0.6, pitch: 1.25 });
+  if (token !== phonicsPlayToken) return;
+  if (letters[i]) letters[i].classList.remove('active');
+}
+
+document.getElementById('phonics-prev').addEventListener('click', () => phonicsShow(phonicsIdx - 1));
+document.getElementById('phonics-next').addEventListener('click', () => phonicsShow(phonicsIdx + 1));
+document.getElementById('phonics-say').addEventListener('click', () => speakPhonicsWord(window.PHONICS_WORDS[phonicsIdx]));
+phonicsEmojiEl.addEventListener('click', () => speakPhonicsWord(window.PHONICS_WORDS[phonicsIdx]));
+
+// ====== PHONICS TEST MODE ======
+let phonicsAnswer = null;
+let phonicsCorrect = 0;
+let phonicsTries = 0;
+let phonicsAccepting = false;
+
+const phonicsChoicesEl     = document.getElementById('phonics-test-choices');
+const phonicsCorrectEl     = document.getElementById('phonics-score-correct');
+const phonicsTriesEl       = document.getElementById('phonics-score-tries');
+
+function phonicsResetScore() {
+  phonicsCorrect = 0;
+  phonicsTries = 0;
+  phonicsCorrectEl.textContent = '0';
+  phonicsTriesEl.textContent = '0';
+}
+
+function nextPhonicsTestRound() {
+  phonicsAccepting = true;
+  const pool = window.PHONICS_WORDS;
+  phonicsAnswer = pool[Math.floor(Math.random() * pool.length)];
+
+  // Pick 3 distinct wrong choices
+  const set = new Set([phonicsAnswer.word]);
+  const choices = [phonicsAnswer];
+  while (choices.length < 4) {
+    const c = pool[Math.floor(Math.random() * pool.length)];
+    if (!set.has(c.word)) { set.add(c.word); choices.push(c); }
+  }
+  shuffle(choices);
+
+  phonicsChoicesEl.innerHTML = '';
+  choices.forEach((item, i) => {
+    const btn = document.createElement('button');
+    btn.className = `choice phonics-choice c${i + 1}`;
+    btn.innerHTML =
+      `<div class="choice-emoji">${item.emoji}</div>` +
+      `<div class="choice-word">${item.word.toLowerCase()}</div>`;
+    btn.dataset.value = item.word;
+    btn.addEventListener('click', () => handlePhonicsChoice(btn, item));
+    phonicsChoicesEl.appendChild(btn);
+  });
+
+  setTimeout(sayPhonicsTestPrompt, 350);
+}
+
+async function sayPhonicsTestPrompt() {
+  speechSynthesis.cancel();
+  const token = ++phonicsPlayToken;
+  await sayAsync('Can you find...', { rate: 0.85, pitch: 1.25 });
+  if (token !== phonicsPlayToken) return;
+  await sleep(150);
+  for (const s of phonicsAnswer.sounds) {
+    if (token !== phonicsPlayToken) return;
+    await sayAsync(s, { rate: 0.55, pitch: 1.25 });
+    await sleep(120);
+  }
+  if (token !== phonicsPlayToken) return;
+  await sayAsync(phonicsAnswer.word, { rate: 0.85, pitch: 1.3 });
+}
+
+document.getElementById('phonics-test-say').addEventListener('click', sayPhonicsTestPrompt);
+
+function handlePhonicsChoice(btn, item) {
+  if (!phonicsAccepting) return;
+  phonicsTries++;
+  phonicsTriesEl.textContent = String(phonicsTries);
+
+  if (item.word === phonicsAnswer.word) {
+    phonicsAccepting = false;
+    btn.classList.add('correct');
+    phonicsCorrect++;
+    phonicsCorrectEl.textContent = String(phonicsCorrect);
+    say(`Yes! ${phonicsAnswer.word}! Great job!`, { rate: 0.9, pitch: 1.3 });
+    celebrate();
+    setTimeout(nextPhonicsTestRound, 1800);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });

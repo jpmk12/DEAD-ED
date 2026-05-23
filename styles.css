@@ -168,6 +168,7 @@ button {
 /* tile color accents */
 .tile-counting { background: linear-gradient(160deg, #fff8e1, #ffe082); }
 .tile-letters  { background: linear-gradient(160deg, #ede7ff, #b197fc); }
+.tile-phonics  { background: linear-gradient(160deg, #d6f0ff, #74c0fc); }
 .tile-learn    { background: linear-gradient(160deg, #d4f8e8, #7ed8a8); }
 .tile-test     { background: linear-gradient(160deg, #ffd6e7, #ff9bc4); }
 
@@ -291,6 +292,64 @@ button {
   line-height: 1;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
   animation: dinoPop 0.5s ease both;
+}
+
+/* ====== Phonics ====== */
+.phonics-letters {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.phonics-letter {
+  width: clamp(60px, 16vw, 88px);
+  height: clamp(60px, 16vw, 88px);
+  border-radius: 20px;
+  background: linear-gradient(160deg, #fff3bf, #ffd43b);
+  color: #fff;
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  animation: dinoPop 0.4s ease both;
+}
+.phonics-letter.active {
+  transform: scale(1.2) translateY(-10px);
+  box-shadow: 0 14px 0 rgba(0, 0, 0, 0.15);
+  background: linear-gradient(160deg, #ff8787, #ff6b6b);
+}
+.phonics-letter:active:not(.active) {
+  transform: scale(0.95);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+}
+.phonics-emoji {
+  font-size: clamp(3.5rem, 12vw, 6rem);
+  line-height: 1;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+  animation: dinoPop 0.5s ease both;
+}
+
+/* Phonics test choices: emoji on top, word below */
+.choice.phonics-choice {
+  aspect-ratio: 1 / 1.15;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+}
+.choice.phonics-choice .choice-emoji {
+  font-size: clamp(2.4rem, 9vw, 4rem);
+  line-height: 1;
+}
+.choice.phonics-choice .choice-word {
+  font-size: clamp(1rem, 3.5vw, 1.5rem);
+  font-weight: 900;
+  color: #444;
+  text-transform: lowercase;
 }
 
 /* learn controls */
