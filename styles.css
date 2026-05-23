@@ -167,6 +167,7 @@ button {
 
 /* tile color accents */
 .tile-counting { background: linear-gradient(160deg, #fff8e1, #ffe082); }
+.tile-letters  { background: linear-gradient(160deg, #ede7ff, #b197fc); }
 .tile-learn    { background: linear-gradient(160deg, #d4f8e8, #7ed8a8); }
 .tile-test     { background: linear-gradient(160deg, #ffd6e7, #ff9bc4); }
 
@@ -240,7 +241,7 @@ button {
 }
 .big-number path {
   fill: none;
-  stroke: url(#numGrad);
+  /* stroke set inline per-render so each card uses a unique gradient id */
   stroke-width: 14;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -282,6 +283,14 @@ button {
   font-weight: bold;
   color: #4a4a4a;
   text-transform: capitalize;
+}
+
+/* Letter-card "is for X" thumbnail (emoji-based) */
+.letter-img {
+  font-size: clamp(3.5rem, 11vw, 5.5rem);
+  line-height: 1;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+  animation: dinoPop 0.5s ease both;
 }
 
 /* learn controls */

@@ -7,36 +7,26 @@ const NUMBER_WORDS = [
 // Emoji-based extras used for the confetti burst (cheap to render lots of).
 const EXTRAS = ['🥚', '🌴', '🌋', '🦴', '⭐', '🦖', '🦕'];
 
-// SVG path data for each digit, drawn the way a child writes them
-// (top-down, in one stroke where possible). viewBox per digit is 100x140.
-const DIGIT_PATHS = {
-  '0': ['M 50 15 Q 20 15 20 70 Q 20 130 50 130 Q 80 130 80 70 Q 80 15 50 15'],
-  '1': ['M 28 35 L 55 15 L 55 130'],
-  '2': ['M 18 35 Q 18 10 50 10 Q 82 10 82 38 Q 82 55 50 75 L 18 130 L 82 130'],
-  '3': ['M 20 28 Q 30 10 55 10 Q 82 10 82 35 Q 82 55 50 65 Q 82 75 82 100 Q 82 130 55 130 Q 25 130 18 110'],
-  // 4 is two strokes (the body, then the vertical bar)
-  '4': ['M 70 10 L 18 80 L 85 80', 'M 70 30 L 70 130'],
-  '5': ['M 75 15 L 30 15 L 25 65 Q 50 50 72 70 Q 85 85 75 108 Q 65 130 35 130 Q 18 125 15 110'],
-  '6': ['M 75 25 Q 50 15 32 50 Q 15 80 25 110 Q 35 130 55 130 Q 82 130 82 100 Q 82 72 55 72 Q 30 72 25 95'],
-  '7': ['M 18 15 L 82 15 L 38 130'],
-  '8': ['M 50 70 Q 22 70 22 40 Q 22 12 50 12 Q 78 12 78 40 Q 78 70 50 70 Q 18 70 18 100 Q 18 132 50 132 Q 82 132 82 100 Q 82 70 50 70'],
-  '9': ['M 78 50 Q 78 15 50 15 Q 22 15 22 40 Q 22 65 50 65 Q 78 65 78 50 L 78 130'],
-};
-
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-function renderLearnNumber(num) {
-  const digits = String(num).split('');
-  learnNumberEl.innerHTML = '';
+// Renders a string of characters (digits or uppercase letters) as an SVG
+// whose strokes animate on via stroke-dashoffset. Used by both Counting and
+// Letters in learn mode. Character path data lives in chars.js (CHAR_PATHS).
+let _gradCounter = 0;
+function renderChar(str, container) {
+  const chars = String(str).split('');
+  container.innerHTML = '';
 
+  // Each render gets a unique gradient id so multiple SVGs on the page don't
+  // collide on `url(#...)` references.
+  const gradId = `cg${++_gradCounter}`;
   const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('viewBox', `0 0 ${digits.length * 100} 140`);
+  svg.setAttribute('viewBox', `0 0 ${chars.length * 100} 140`);
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-  // gradient + drop shadow defs (referenced by .big-number path styles)
   const defs = document.createElementNS(SVG_NS, 'defs');
   defs.innerHTML = `
-    <linearGradient id="numGrad" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ff6b6b"/>
       <stop offset="0.5" stop-color="#ffa94d"/>
       <stop offset="1" stop-color="#ffd43b"/>
@@ -44,31 +34,30 @@ function renderLearnNumber(num) {
   `;
   svg.appendChild(defs);
 
-  // Each digit gets its own group offset horizontally. Strokes within a digit
-  // animate in sequence so e.g. the "4" draws the body then the vertical bar.
+  // Each character gets its own group offset horizontally. Strokes within a
+  // character animate in sequence, so e.g. the "4" draws the body then the
+  // vertical bar, "A" draws the peak then the crossbar.
   let cumulativeDelay = 0;
-  digits.forEach((d, digitIdx) => {
-    const strokes = DIGIT_PATHS[d] || [];
+  chars.forEach((c, charIdx) => {
+    const strokes = (window.CHAR_PATHS && window.CHAR_PATHS[c]) || [];
     strokes.forEach((data, strokeIdx) => {
       const path = document.createElementNS(SVG_NS, 'path');
       path.setAttribute('d', data);
-      path.setAttribute('transform', `translate(${digitIdx * 100} 0)`);
+      path.setAttribute('transform', `translate(${charIdx * 100} 0)`);
+      path.setAttribute('stroke', `url(#${gradId})`);
       svg.appendChild(path);
 
       // Set CSS custom props BEFORE applying the .draw class so the very first
-      // frame already has the correct dasharray/dashoffset (otherwise you'd see
-      // a fully-drawn digit pop in for one frame before the animation begins).
+      // frame already has the correct dasharray/dashoffset.
       const len = path.getTotalLength();
       path.style.setProperty('--len', len);
       path.style.setProperty('--delay', `${cumulativeDelay}s`);
       path.classList.add('draw');
-      // Stagger: each stroke takes ~1.1s; nudge the next one slightly earlier
-      // so the whole number doesn't feel sluggish.
       cumulativeDelay += strokeIdx === strokes.length - 1 ? 0.8 : 0.5;
     });
   });
 
-  learnNumberEl.appendChild(svg);
+  container.appendChild(svg);
 }
 
 // ====== Speech ======
@@ -115,6 +104,9 @@ const screens = {
   'counting-menu': document.getElementById('counting-menu'),
   'learn-mode': document.getElementById('learn-mode'),
   'test-mode': document.getElementById('test-mode'),
+  'letters-menu': document.getElementById('letters-menu'),
+  'letters-learn': document.getElementById('letters-learn'),
+  'letters-test': document.getElementById('letters-test'),
 };
 
 function showScreen(id) {
@@ -122,15 +114,16 @@ function showScreen(id) {
   screens[id].classList.add('active');
 }
 
-// landing tile -> counting menu
+// landing tile -> app menu
 document.querySelectorAll('[data-app]').forEach(btn => {
   btn.addEventListener('click', () => {
     const app = btn.dataset.app;
     if (app === 'counting') showScreen('counting-menu');
+    else if (app === 'letters') showScreen('letters-menu');
   });
 });
 
-// mode picker -> learn / test
+// counting mode picker -> learn / test
 document.querySelectorAll('[data-mode]').forEach(btn => {
   btn.addEventListener('click', () => {
     const mode = btn.dataset.mode;
@@ -141,6 +134,21 @@ document.querySelectorAll('[data-mode]').forEach(btn => {
       showScreen('test-mode');
       resetScore();
       nextTestRound();
+    }
+  });
+});
+
+// letters mode picker -> learn / test
+document.querySelectorAll('[data-letters-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.lettersMode;
+    if (mode === 'learn') {
+      showScreen('letters-learn');
+      lettersShow(0);
+    } else if (mode === 'test') {
+      showScreen('letters-test');
+      lettersResetScore();
+      nextLettersTestRound();
     }
   });
 });
@@ -163,7 +171,7 @@ const learnCardEl   = document.getElementById('learn-card');
 
 function learnShow(n) {
   learnNumber = Math.max(1, Math.min(10, n));
-  renderLearnNumber(learnNumber);
+  renderChar(learnNumber, learnNumberEl);
   learnWordEl.textContent = NUMBER_WORDS[learnNumber];
 
   // populate dino row with an SVG dino per item, all the same species per card
@@ -299,6 +307,113 @@ function celebrate() {
   }
 
   setTimeout(() => celebrateEl.classList.remove('show'), 1500);
+}
+
+// ====== LETTERS LEARN MODE ======
+let letterIdx = 0;
+
+const lettersLetterEl = document.getElementById('letters-letter');
+const lettersImgEl    = document.getElementById('letters-img');
+const lettersWordEl   = document.getElementById('letters-word');
+const lettersCardEl   = document.getElementById('letters-card');
+
+function lettersShow(idx) {
+  letterIdx = ((idx % 26) + 26) % 26;
+  const letter = window.LETTERS[letterIdx];
+  const info   = window.LETTER_INFO[letter];
+
+  renderChar(letter, lettersLetterEl);
+  lettersImgEl.textContent = info.emoji;
+  lettersWordEl.textContent = `${letter} is for ${info.word}`;
+
+  // retrigger the emoji pop animation
+  lettersImgEl.style.animation = 'none';
+  void lettersImgEl.offsetWidth;
+  lettersImgEl.style.animation = '';
+
+  // retrigger card pop
+  lettersCardEl.classList.remove('pop');
+  void lettersCardEl.offsetWidth;
+  lettersCardEl.classList.add('pop');
+
+  speakLetter(letter);
+}
+
+function speakLetter(letter) {
+  const info = window.LETTER_INFO[letter];
+  const name = window.LETTER_NAMES[letter];
+  say(`This is the letter ${name}. ${name} is for ${info.word}.`, { rate: 0.8, pitch: 1.25 });
+}
+
+document.getElementById('letters-prev').addEventListener('click', () => lettersShow(letterIdx - 1));
+document.getElementById('letters-next').addEventListener('click', () => lettersShow(letterIdx + 1));
+document.getElementById('letters-say').addEventListener('click', () => speakLetter(window.LETTERS[letterIdx]));
+lettersCardEl.addEventListener('click', () => speakLetter(window.LETTERS[letterIdx]));
+
+// ====== LETTERS TEST MODE ======
+let lettersAnswer = null;
+let lettersCorrect = 0;
+let lettersTries = 0;
+let lettersAccepting = false;
+
+const lettersChoicesEl     = document.getElementById('letters-test-choices');
+const lettersCorrectEl     = document.getElementById('letters-score-correct');
+const lettersTriesEl       = document.getElementById('letters-score-tries');
+
+function lettersResetScore() {
+  lettersCorrect = 0;
+  lettersTries = 0;
+  lettersCorrectEl.textContent = '0';
+  lettersTriesEl.textContent = '0';
+}
+
+function nextLettersTestRound() {
+  lettersAccepting = true;
+  lettersAnswer = window.LETTERS[Math.floor(Math.random() * 26)];
+
+  const pool = new Set([lettersAnswer]);
+  while (pool.size < 4) pool.add(window.LETTERS[Math.floor(Math.random() * 26)]);
+  const choices = shuffle([...pool]);
+
+  lettersChoicesEl.innerHTML = '';
+  choices.forEach((l, i) => {
+    const btn = document.createElement('button');
+    btn.className = `choice c${i + 1}`;
+    btn.textContent = l;
+    btn.dataset.value = l;
+    btn.addEventListener('click', () => handleLetterChoice(btn, l));
+    lettersChoicesEl.appendChild(btn);
+  });
+
+  setTimeout(sayLettersTestPrompt, 350);
+}
+
+function sayLettersTestPrompt() {
+  const name = window.LETTER_NAMES[lettersAnswer];
+  say(`Can you find... ${name}?`, { rate: 0.85, pitch: 1.25 });
+}
+
+document.getElementById('letters-test-say').addEventListener('click', sayLettersTestPrompt);
+
+function handleLetterChoice(btn, value) {
+  if (!lettersAccepting) return;
+  lettersTries++;
+  lettersTriesEl.textContent = String(lettersTries);
+
+  if (value === lettersAnswer) {
+    lettersAccepting = false;
+    btn.classList.add('correct');
+    lettersCorrect++;
+    lettersCorrectEl.textContent = String(lettersCorrect);
+    const name = window.LETTER_NAMES[lettersAnswer];
+    say(`Yes! Letter ${name}! Great job!`, { rate: 0.9, pitch: 1.3 });
+    celebrate();
+    setTimeout(nextLettersTestRound, 1800);
+  } else {
+    btn.classList.add('wrong');
+    say(`Try again!`, { rate: 0.95, pitch: 1.2 });
+    setTimeout(() => btn.classList.remove('wrong'), 600);
+  }
 }
 
 // ====== Voice priming ======

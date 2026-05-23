@@ -33,10 +33,10 @@
         <div class="tile-sub">Numbers 1–10</div>
       </button>
 
-      <button class="tile tile-locked" disabled>
-        <div class="tile-emoji">🔤</div>
+      <button class="tile tile-letters" data-app="letters">
+        <div class="tile-emoji tile-svg" data-dino="raptor"></div>
         <div class="tile-label">Letters</div>
-        <div class="tile-sub">Coming soon</div>
+        <div class="tile-sub">A to Z</div>
       </button>
 
       <button class="tile tile-locked" disabled>
@@ -116,14 +116,80 @@
       </div>
     </div>
 
-    <!-- celebration overlay -->
-    <div id="celebrate" class="celebrate" aria-hidden="true">
-      <div class="celebrate-text" id="celebrate-text">Yay!</div>
-      <div class="confetti" id="confetti"></div>
+  </section>
+
+  <!-- ============ LETTERS: MODE PICKER ============ -->
+  <section id="letters-menu" class="screen">
+    <button class="back-btn" data-back="landing">← Back</button>
+    <header class="landing-header">
+      <h1 class="title">
+        <span class="title-dino" data-dino="raptor"></span>
+        ABCs!
+      </h1>
+      <p class="subtitle">How do you want to play?</p>
+    </header>
+
+    <div class="tile-grid two-up">
+      <button class="tile tile-learn" data-letters-mode="learn">
+        <div class="tile-emoji">📚</div>
+        <div class="tile-label">Learn</div>
+        <div class="tile-sub">See & hear letters</div>
+      </button>
+
+      <button class="tile tile-test" data-letters-mode="test">
+        <div class="tile-emoji">🎯</div>
+        <div class="tile-label">Test</div>
+        <div class="tile-sub">Listen & choose</div>
+      </button>
     </div>
   </section>
 
+  <!-- ============ LETTERS LEARN MODE ============ -->
+  <section id="letters-learn" class="screen">
+    <button class="back-btn" data-back="letters-menu">← Back</button>
+
+    <div class="flashcard-area">
+      <div id="letters-card" class="flashcard">
+        <div class="big-number" id="letters-letter"></div>
+        <div class="letter-img" id="letters-img">🍎</div>
+        <div class="card-word" id="letters-word">A is for Apple</div>
+      </div>
+
+      <div class="learn-controls">
+        <button class="ctrl-btn ctrl-prev" id="letters-prev" aria-label="Previous">◀</button>
+        <button class="ctrl-btn ctrl-say" id="letters-say" aria-label="Say again">🔊 Say it!</button>
+        <button class="ctrl-btn ctrl-next" id="letters-next" aria-label="Next">▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LETTERS TEST MODE ============ -->
+  <section id="letters-test" class="screen">
+    <button class="back-btn" data-back="letters-menu">← Back</button>
+
+    <div class="test-area">
+      <div class="test-prompt">
+        <div class="test-instruction">Tap the letter you hear!</div>
+        <button class="ctrl-btn ctrl-say big-say" id="letters-test-say">🔊 Say it again</button>
+      </div>
+
+      <div id="letters-test-choices" class="choice-grid"></div>
+
+      <div class="score-row">
+        <div class="score-pill">⭐ <span id="letters-score-correct">0</span></div>
+        <div class="score-pill alt">🦴 <span id="letters-score-tries">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- shared celebration overlay (used by both test modes) -->
+  <div id="celebrate" class="celebrate" aria-hidden="true">
+    <div class="celebrate-text" id="celebrate-text">Yay!</div>
+    <div class="confetti" id="confetti"></div>
+  </div>
+
   <script src="dinos.js"></script>
+  <script src="chars.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
