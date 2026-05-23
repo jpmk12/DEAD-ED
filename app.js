@@ -111,17 +111,11 @@ function learnShow(n) {
   void learnCardEl.offsetWidth; // reflow to restart anim
   learnCardEl.classList.add('pop');
 
-  // speak: "Three.  One, two, three!"
-  speakNumberWithCount(learnNumber);
+  speakNumber(learnNumber);
 }
 
-function speakNumberWithCount(n) {
-  // First say the word, then count each dino out loud.
-  const word = NUMBER_WORDS[n];
-  const counts = [];
-  for (let i = 1; i <= n; i++) counts.push(NUMBER_WORDS[i]);
-  // Spaces give a tiny pause between words on most TTS engines.
-  say(`${word}.  ${counts.join(', ')}.`, { rate: 0.8, pitch: 1.25 });
+function speakNumber(n) {
+  say(NUMBER_WORDS[n], { rate: 0.8, pitch: 1.25 });
 }
 
 document.getElementById('learn-prev').addEventListener('click', () => {
@@ -131,11 +125,11 @@ document.getElementById('learn-next').addEventListener('click', () => {
   learnShow(learnNumber === 10 ? 1 : learnNumber + 1);
 });
 document.getElementById('learn-say').addEventListener('click', () => {
-  speakNumberWithCount(learnNumber);
+  speakNumber(learnNumber);
 });
 
 // Tap the card itself to repeat (kids love poking the big number)
-learnCardEl.addEventListener('click', () => speakNumberWithCount(learnNumber));
+learnCardEl.addEventListener('click', () => speakNumber(learnNumber));
 
 // ====== TEST MODE ======
 let currentAnswer = null;
