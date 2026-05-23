@@ -50,6 +50,12 @@
         <div class="tile-label">Phonics</div>
         <div class="tile-sub">Sound out words</div>
       </button>
+
+      <button class="tile tile-shapes" data-app="shapes">
+        <div class="tile-emoji">⭐</div>
+        <div class="tile-label">Shapes</div>
+        <div class="tile-sub">9 shapes to know</div>
+      </button>
     </div>
   </section>
 
@@ -375,6 +381,99 @@
     </div>
   </section>
 
+  <!-- ============ SHAPES: MODE PICKER ============ -->
+  <section id="shapes-menu" class="screen">
+    <button class="back-btn" data-back="landing">← Back</button>
+    <header class="landing-header">
+      <h1 class="title">
+        <span class="title-dino" data-dino="trex"></span>
+        Shapes!
+      </h1>
+      <p class="subtitle">How do you want to play?</p>
+    </header>
+
+    <div class="tile-grid three-up">
+      <button class="tile tile-learn" data-shapes-mode="learn">
+        <div class="tile-emoji">📚</div>
+        <div class="tile-label">Learn</div>
+        <div class="tile-sub">See & hear</div>
+      </button>
+
+      <button class="tile tile-test" data-shapes-mode="test">
+        <div class="tile-emoji">👂</div>
+        <div class="tile-label">Listen Test</div>
+        <div class="tile-sub">Hear it, pick it</div>
+      </button>
+
+      <button class="tile tile-look" data-shapes-mode="look">
+        <div class="tile-emoji">👀</div>
+        <div class="tile-label">Look Test</div>
+        <div class="tile-sub">See it, say it</div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ SHAPES LEARN MODE ============ -->
+  <section id="shapes-learn" class="screen">
+    <button class="back-btn" data-back="shapes-menu">← Back</button>
+
+    <div class="flashcard-area">
+      <div id="shapes-card" class="flashcard">
+        <div class="shape-display" id="shape-display"></div>
+        <div class="card-word" id="shape-name">Circle</div>
+      </div>
+
+      <div class="learn-controls">
+        <button class="ctrl-btn ctrl-prev" id="shapes-prev" aria-label="Previous">◀</button>
+        <button class="ctrl-btn ctrl-say" id="shapes-say" aria-label="Say again">🔊 Say it!</button>
+        <button class="ctrl-btn ctrl-next" id="shapes-next" aria-label="Next">▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SHAPES LISTEN TEST ============ -->
+  <section id="shapes-test" class="screen">
+    <button class="back-btn" data-back="shapes-menu">← Back</button>
+
+    <div class="test-area">
+      <div class="test-prompt">
+        <div class="test-instruction">Tap the shape you hear!</div>
+        <button class="ctrl-btn ctrl-say big-say" id="shapes-test-say">🔊 Say it again</button>
+      </div>
+
+      <div id="shapes-test-choices" class="choice-grid"></div>
+
+      <div class="score-row">
+        <div class="score-pill">⭐ <span id="shapes-score-correct">0</span></div>
+        <div class="score-pill alt">🦴 <span id="shapes-score-tries">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SHAPES LOOK TEST (see shape, say it) ============ -->
+  <section id="shapes-look" class="screen">
+    <button class="back-btn" data-back="shapes-menu">← Back</button>
+
+    <div class="flashcard-area">
+      <div class="look-instruction">What shape is this?</div>
+
+      <div id="shapes-look-card" class="flashcard look-card">
+        <div class="shape-display" id="shapes-look-display"></div>
+        <div class="card-word" id="shapes-look-name">Circle</div>
+      </div>
+
+      <div class="look-buttons">
+        <button class="ctrl-btn ctrl-knew" id="shapes-look-knew">✓ Knew it!</button>
+        <button class="ctrl-btn ctrl-help" id="shapes-look-help">🤔 Help me</button>
+      </div>
+
+      <div class="score-row">
+        <div class="score-pill">⭐ <span id="shapes-look-correct">0</span></div>
+        <div class="score-pill alt">🦴 <span id="shapes-look-tries">0</span></div>
+      </div>
+    </div>
+  </section>
+
   <!-- shared celebration overlay (used by both test modes) -->
   <div id="celebrate" class="celebrate" aria-hidden="true">
     <div class="celebrate-text" id="celebrate-text">Yay!</div>
@@ -385,6 +484,7 @@
   <script src="chars.js"></script>
   <script src="phonics.js"></script>
   <script src="rhyming.js"></script>
+  <script src="shapes.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

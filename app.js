@@ -135,6 +135,10 @@ const screens = {
   'rhyming-menu': document.getElementById('rhyming-menu'),
   'rhyming-learn': document.getElementById('rhyming-learn'),
   'rhyming-test': document.getElementById('rhyming-test'),
+  'shapes-menu': document.getElementById('shapes-menu'),
+  'shapes-learn': document.getElementById('shapes-learn'),
+  'shapes-test': document.getElementById('shapes-test'),
+  'shapes-look': document.getElementById('shapes-look'),
 };
 
 function showScreen(id) {
@@ -150,6 +154,7 @@ document.querySelectorAll('[data-app]').forEach(btn => {
     else if (app === 'letters') showScreen('letters-menu');
     else if (app === 'phonics') showScreen('phonics-menu');
     else if (app === 'rhyming') showScreen('rhyming-menu');
+    else if (app === 'shapes') showScreen('shapes-menu');
   });
 });
 
@@ -213,6 +218,25 @@ document.querySelectorAll('[data-rhyming-mode]').forEach(btn => {
       showScreen('rhyming-test');
       rhymingResetScore();
       nextRhymingTestRound();
+    }
+  });
+});
+
+// shapes mode picker -> learn / listen test / look test
+document.querySelectorAll('[data-shapes-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.shapesMode;
+    if (mode === 'learn') {
+      showScreen('shapes-learn');
+      shapesShow(0);
+    } else if (mode === 'test') {
+      showScreen('shapes-test');
+      shapesResetScore();
+      nextShapesTestRound();
+    } else if (mode === 'look') {
+      showScreen('shapes-look');
+      shapesLookResetScore();
+      nextShapesLookRound();
     }
   });
 });
@@ -898,6 +922,168 @@ function handleRhymeAnswer(btn, saidYes) {
 
 rhymeYesBtn.addEventListener('click', () => handleRhymeAnswer(rhymeYesBtn, true));
 rhymeNoBtn .addEventListener('click', () => handleRhymeAnswer(rhymeNoBtn,  false));
+
+// ====== SHAPES LEARN MODE ======
+const shapeDisplayEl  = document.getElementById('shape-display');
+const shapeNameEl     = document.getElementById('shape-name');
+const shapesCardEl    = document.getElementById('shapes-card');
+
+let shapeIdx = 0;
+
+function shapesShow(idx) {
+  const total = window.SHAPES.length;
+  shapeIdx = ((idx % total) + total) % total;
+  const shape = window.SHAPES[shapeIdx];
+
+  shapeDisplayEl.innerHTML = shape.svg;
+  shapeNameEl.textContent  = shape.name;
+
+  // Retrigger shape pop animation
+  shapeDisplayEl.style.animation = 'none';
+  void shapeDisplayEl.offsetWidth;
+  shapeDisplayEl.style.animation = '';
+
+  // Card pop
+  shapesCardEl.classList.remove('pop');
+  void shapesCardEl.offsetWidth;
+  shapesCardEl.classList.add('pop');
+
+  speakShape(shape);
+}
+
+function speakShape(shape) {
+  // "A" vs "An" — Oval is the only vowel-starter
+  const article = /^[aeiou]/i.test(shape.name) ? 'an' : 'a';
+  say(`This is ${article} ${shape.name.toLowerCase()}.`, { rate: 0.85, pitch: 1.25 });
+}
+
+document.getElementById('shapes-prev').addEventListener('click', () => shapesShow(shapeIdx - 1));
+document.getElementById('shapes-next').addEventListener('click', () => shapesShow(shapeIdx + 1));
+document.getElementById('shapes-say').addEventListener('click', () => speakShape(window.SHAPES[shapeIdx]));
+shapesCardEl.addEventListener('click', () => speakShape(window.SHAPES[shapeIdx]));
+
+// ====== SHAPES LISTEN TEST ======
+const shapesChoicesEl    = document.getElementById('shapes-test-choices');
+const shapesCorrectEl    = document.getElementById('shapes-score-correct');
+const shapesTriesEl      = document.getElementById('shapes-score-tries');
+
+let shapesAnswer = null;
+let shapesCorrect = 0;
+let shapesTries = 0;
+let shapesAccepting = false;
+
+function shapesResetScore() {
+  shapesCorrect = 0;
+  shapesTries = 0;
+  shapesCorrectEl.textContent = '0';
+  shapesTriesEl.textContent = '0';
+}
+
+function nextShapesTestRound() {
+  shapesAccepting = true;
+  const pool = window.SHAPES;
+  shapesAnswer = pool[Math.floor(Math.random() * pool.length)];
+
+  // Pick 3 distinct wrong choices
+  const set = new Set([shapesAnswer.name]);
+  const choices = [shapesAnswer];
+  while (choices.length < 4) {
+    const c = pool[Math.floor(Math.random() * pool.length)];
+    if (!set.has(c.name)) { set.add(c.name); choices.push(c); }
+  }
+  shuffle(choices);
+
+  shapesChoicesEl.innerHTML = '';
+  choices.forEach((shape, i) => {
+    const btn = document.createElement('button');
+    btn.className = `choice shape-choice c${i + 1}`;
+    btn.innerHTML = shape.svg;
+    btn.dataset.value = shape.name;
+    btn.addEventListener('click', () => handleShapeChoice(btn, shape));
+    shapesChoicesEl.appendChild(btn);
+  });
+
+  setTimeout(sayShapeTestPrompt, 350);
+}
+
+function sayShapeTestPrompt() {
+  const article = /^[aeiou]/i.test(shapesAnswer.name) ? 'an' : 'a';
+  say(`Can you find ${article} ${shapesAnswer.name.toLowerCase()}?`, { rate: 0.85, pitch: 1.25 });
+}
+
+document.getElementById('shapes-test-say').addEventListener('click', sayShapeTestPrompt);
+
+function handleShapeChoice(btn, shape) {
+  if (!shapesAccepting) return;
+  shapesTries++;
+  shapesTriesEl.textContent = String(shapesTries);
+
+  if (shape.name === shapesAnswer.name) {
+    shapesAccepting = false;
+    btn.classList.add('correct');
+    shapesCorrect++;
+    shapesCorrectEl.textContent = String(shapesCorrect);
+    say(`Yes! ${shapesAnswer.name}! Great job!`, { rate: 0.9, pitch: 1.3 });
+    celebrate();
+    setTimeout(nextShapesTestRound, 1800);
+  } else {
+    btn.classList.add('wrong');
+    say(`Try again!`, { rate: 0.95, pitch: 1.2 });
+    setTimeout(() => btn.classList.remove('wrong'), 600);
+  }
+}
+
+// ====== SHAPES LOOK TEST (see shape, say it) ======
+const shapesLookDisplayEl = document.getElementById('shapes-look-display');
+const shapesLookNameEl    = document.getElementById('shapes-look-name');
+const shapesLookCardEl    = document.getElementById('shapes-look-card');
+const shapesLookCorrectEl = document.getElementById('shapes-look-correct');
+const shapesLookTriesEl   = document.getElementById('shapes-look-tries');
+
+let shapesLookAnswer = null;
+let shapesLookCorrect = 0;
+let shapesLookTries = 0;
+let shapesLookAccepting = false;
+
+function shapesLookResetScore() {
+  shapesLookCorrect = 0;
+  shapesLookTries = 0;
+  shapesLookCorrectEl.textContent = '0';
+  shapesLookTriesEl.textContent = '0';
+}
+
+function nextShapesLookRound() {
+  speechSynthesis.cancel();
+  shapesLookAnswer = window.SHAPES[Math.floor(Math.random() * window.SHAPES.length)];
+
+  shapesLookDisplayEl.innerHTML = shapesLookAnswer.svg;
+  shapesLookNameEl.textContent  = shapesLookAnswer.name;
+  shapesLookCardEl.classList.remove('revealed');
+
+  shapesLookAccepting = true;
+}
+
+function handleShapesLookAnswer(knew) {
+  if (!shapesLookAccepting) return;
+  shapesLookAccepting = false;
+
+  shapesLookTries++;
+  shapesLookTriesEl.textContent = String(shapesLookTries);
+  if (knew) {
+    shapesLookCorrect++;
+    shapesLookCorrectEl.textContent = String(shapesLookCorrect);
+  }
+
+  shapesLookCardEl.classList.add('revealed');
+  say(`${shapesLookAnswer.name}!`, { rate: 0.9, pitch: 1.3 });
+
+  if (knew) celebrate();
+
+  setTimeout(nextShapesLookRound, 2000);
+}
+
+document.getElementById('shapes-look-knew').addEventListener('click', () => handleShapesLookAnswer(true));
+document.getElementById('shapes-look-help').addEventListener('click', () => handleShapesLookAnswer(false));
 
 // ====== Voice priming ======
 // Mobile browsers require a user gesture before TTS will work. The first tap

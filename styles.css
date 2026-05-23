@@ -177,6 +177,7 @@ button {
 .tile-test     { background: linear-gradient(160deg, #ffd6e7, #ff9bc4); }
 .tile-look     { background: linear-gradient(160deg, #fff0d6, #ffb380); }
 .tile-rhyming  { background: linear-gradient(160deg, #ffe8f0, #ff8fab); }
+.tile-shapes   { background: linear-gradient(160deg, #e3fafc, #66d9e8); }
 
 .tile-locked {
   opacity: 0.55;
@@ -357,6 +358,33 @@ button {
   line-height: 1;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
   animation: dinoPop 0.5s ease both;
+}
+
+/* ====== Shapes ====== */
+.shape-display {
+  width: clamp(160px, 38vw, 230px);
+  height: clamp(160px, 38vw, 230px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: dinoPop 0.5s ease both;
+}
+.shape-display svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.18));
+}
+/* Shape choice tile in Listen Test: SVG fills the colored tile */
+.choice.shape-choice {
+  padding: 14px;
+  /* override the default text-centering font sizing */
+}
+.choice.shape-choice svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.18));
 }
 
 /* ====== Rhyming ====== */
