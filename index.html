@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Dino Learn — Fun Learning for Little Explorers</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ============ LANDING SCREEN ============ -->
+  <section id="landing" class="screen active">
+    <div class="floating-bg" aria-hidden="true">
+      <span class="float-emoji" style="--d:0s; --x:10%;">🦕</span>
+      <span class="float-emoji" style="--d:2s; --x:80%;">🦖</span>
+      <span class="float-emoji" style="--d:4s; --x:30%;">🌋</span>
+      <span class="float-emoji" style="--d:6s; --x:65%;">🥚</span>
+      <span class="float-emoji" style="--d:8s; --x:50%;">🌴</span>
+    </div>
+
+    <header class="landing-header">
+      <h1 class="title">
+        <span class="title-dino">🦖</span>
+        Dino Learn
+        <span class="title-dino flip">🦕</span>
+      </h1>
+      <p class="subtitle">Pick something fun to learn!</p>
+    </header>
+
+    <div class="tile-grid">
+      <button class="tile tile-counting" data-app="counting">
+        <div class="tile-emoji">🦖</div>
+        <div class="tile-label">Counting</div>
+        <div class="tile-sub">Numbers 1–10</div>
+      </button>
+
+      <button class="tile tile-locked" disabled>
+        <div class="tile-emoji">🔤</div>
+        <div class="tile-label">Letters</div>
+        <div class="tile-sub">Coming soon</div>
+      </button>
+
+      <button class="tile tile-locked" disabled>
+        <div class="tile-emoji">🎨</div>
+        <div class="tile-label">Colors</div>
+        <div class="tile-sub">Coming soon</div>
+      </button>
+
+      <button class="tile tile-locked" disabled>
+        <div class="tile-emoji">⭐</div>
+        <div class="tile-label">Shapes</div>
+        <div class="tile-sub">Coming soon</div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ COUNTING: MODE PICKER ============ -->
+  <section id="counting-menu" class="screen">
+    <button class="back-btn" data-back="landing">← Back</button>
+    <header class="landing-header">
+      <h1 class="title">
+        <span class="title-dino">🦖</span>
+        Counting Time!
+      </h1>
+      <p class="subtitle">How do you want to play?</p>
+    </header>
+
+    <div class="tile-grid two-up">
+      <button class="tile tile-learn" data-mode="learn">
+        <div class="tile-emoji">📚</div>
+        <div class="tile-label">Learn</div>
+        <div class="tile-sub">See & hear numbers</div>
+      </button>
+
+      <button class="tile tile-test" data-mode="test">
+        <div class="tile-emoji">🎯</div>
+        <div class="tile-label">Test</div>
+        <div class="tile-sub">Listen & choose</div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ LEARN MODE ============ -->
+  <section id="learn-mode" class="screen">
+    <button class="back-btn" data-back="counting-menu">← Back</button>
+
+    <div class="flashcard-area">
+      <div id="learn-card" class="flashcard">
+        <div class="big-number" id="learn-number">1</div>
+        <div class="dino-row" id="learn-dinos"></div>
+        <div class="card-word" id="learn-word">One</div>
+      </div>
+
+      <div class="learn-controls">
+        <button class="ctrl-btn ctrl-prev" id="learn-prev" aria-label="Previous">◀</button>
+        <button class="ctrl-btn ctrl-say" id="learn-say" aria-label="Say again">🔊 Say it!</button>
+        <button class="ctrl-btn ctrl-next" id="learn-next" aria-label="Next">▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TEST MODE ============ -->
+  <section id="test-mode" class="screen">
+    <button class="back-btn" data-back="counting-menu">← Back</button>
+
+    <div class="test-area">
+      <div class="test-prompt">
+        <div class="test-instruction">Tap the number you hear!</div>
+        <button class="ctrl-btn ctrl-say big-say" id="test-say">🔊 Say it again</button>
+      </div>
+
+      <div id="test-choices" class="choice-grid"></div>
+
+      <div class="score-row">
+        <div class="score-pill">⭐ <span id="score-correct">0</span></div>
+        <div class="score-pill alt">🦴 <span id="score-tries">0</span></div>
+      </div>
+    </div>
+
+    <!-- celebration overlay -->
+    <div id="celebrate" class="celebrate" aria-hidden="true">
+      <div class="celebrate-text" id="celebrate-text">Yay!</div>
+      <div class="confetti" id="confetti"></div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
