@@ -69,17 +69,23 @@
       <button class="case-btn" data-range="11-20">11–20</button>
     </div>
 
-    <div class="tile-grid two-up">
+    <div class="tile-grid three-up">
       <button class="tile tile-learn" data-mode="learn">
         <div class="tile-emoji">📚</div>
         <div class="tile-label">Learn</div>
-        <div class="tile-sub">See & hear numbers</div>
+        <div class="tile-sub">See & hear</div>
       </button>
 
       <button class="tile tile-test" data-mode="test">
-        <div class="tile-emoji">🎯</div>
-        <div class="tile-label">Test</div>
-        <div class="tile-sub">Listen & choose</div>
+        <div class="tile-emoji">👂</div>
+        <div class="tile-label">Listen Test</div>
+        <div class="tile-sub">Hear it, pick it</div>
+      </button>
+
+      <button class="tile tile-look" data-mode="look">
+        <div class="tile-emoji">👀</div>
+        <div class="tile-label">Look Test</div>
+        <div class="tile-sub">See it, say it</div>
       </button>
     </div>
   </section>
@@ -121,6 +127,31 @@
       </div>
     </div>
 
+  </section>
+
+  <!-- ============ LOOK TEST (see numeral, say it) ============ -->
+  <section id="look-mode" class="screen">
+    <button class="back-btn" data-back="counting-menu">← Back</button>
+
+    <div class="flashcard-area">
+      <div class="look-instruction" id="look-instruction">What number is this?</div>
+
+      <div id="look-card" class="flashcard look-card">
+        <div class="big-number" id="look-number"></div>
+        <div class="dino-row" id="look-dinos"></div>
+        <div class="card-word" id="look-word"></div>
+      </div>
+
+      <div class="look-buttons">
+        <button class="ctrl-btn ctrl-knew" id="look-knew">✓ Knew it!</button>
+        <button class="ctrl-btn ctrl-help" id="look-help">🤔 Help me</button>
+      </div>
+
+      <div class="score-row">
+        <div class="score-pill">⭐ <span id="look-score-correct">0</span></div>
+        <div class="score-pill alt">🦴 <span id="look-score-tries">0</span></div>
+      </div>
+    </div>
   </section>
 
   <!-- ============ LETTERS: MODE PICKER ============ -->

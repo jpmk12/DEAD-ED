@@ -116,6 +116,10 @@ button {
   grid-template-columns: repeat(2, 1fr);
   max-width: 600px;
 }
+.tile-grid.three-up {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  max-width: 760px;
+}
 
 .tile {
   background: #fff;
@@ -171,6 +175,7 @@ button {
 .tile-phonics  { background: linear-gradient(160deg, #d6f0ff, #74c0fc); }
 .tile-learn    { background: linear-gradient(160deg, #d4f8e8, #7ed8a8); }
 .tile-test     { background: linear-gradient(160deg, #ffd6e7, #ff9bc4); }
+.tile-look     { background: linear-gradient(160deg, #fff0d6, #ffb380); }
 
 .tile-locked {
   opacity: 0.55;
@@ -436,6 +441,43 @@ button {
 .big-say {
   padding: 20px 32px;
   font-size: 1.5rem;
+}
+
+/* ====== Look Test (see numeral, say it) ====== */
+.look-instruction {
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+  text-align: center;
+  margin-bottom: 4px;
+}
+/* Before reveal: keep dinos + word hidden so the kid has to recall it.
+   Fade in once the parent marks Knew it / Help me. */
+.look-card .dino-row,
+.look-card .card-word {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.look-card.revealed .dino-row,
+.look-card.revealed .card-word {
+  opacity: 1;
+}
+.look-buttons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ctrl-btn.ctrl-knew {
+  background: linear-gradient(160deg, #b2f2bb, #51cf66);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+}
+.ctrl-btn.ctrl-help {
+  background: linear-gradient(160deg, #ffec99, #ffa94d);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* ====== Test Mode ====== */

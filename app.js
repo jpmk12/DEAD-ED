@@ -125,6 +125,7 @@ const screens = {
   'counting-menu': document.getElementById('counting-menu'),
   'learn-mode': document.getElementById('learn-mode'),
   'test-mode': document.getElementById('test-mode'),
+  'look-mode': document.getElementById('look-mode'),
   'letters-menu': document.getElementById('letters-menu'),
   'letters-learn': document.getElementById('letters-learn'),
   'letters-test': document.getElementById('letters-test'),
@@ -148,7 +149,7 @@ document.querySelectorAll('[data-app]').forEach(btn => {
   });
 });
 
-// counting mode picker -> learn / test
+// counting mode picker -> learn / test / look
 document.querySelectorAll('[data-mode]').forEach(btn => {
   btn.addEventListener('click', () => {
     const mode = btn.dataset.mode;
@@ -159,6 +160,10 @@ document.querySelectorAll('[data-mode]').forEach(btn => {
       showScreen('test-mode');
       resetScore();
       nextTestRound();
+    } else if (mode === 'look') {
+      showScreen('look-mode');
+      lookResetScore();
+      nextLookRound();
     }
   });
 });
@@ -215,7 +220,7 @@ function learnShow(n) {
   renderChar(learnNumber, learnNumberEl);
   learnWordEl.textContent = NUMBER_WORDS[learnNumber];
 
-  renderDinoRow(learnNumber);
+  renderDinoRow(learnDinosEl, learnNumber);
 
   // replay card pop animation
   learnCardEl.classList.remove('pop');
@@ -225,12 +230,13 @@ function learnShow(n) {
   speakNumber(learnNumber);
 }
 
-// Lays out dinos for the current count. For 1-10, a single flowing row.
-// For 11-20, splits into a dashed "ten pack" + the remaining ones — same
-// visual structure preschool teachers use to introduce place value.
-function renderDinoRow(count) {
-  learnDinosEl.innerHTML = '';
-  learnDinosEl.classList.toggle('grouped', count > 10);
+// Lays out dinos for the current count into the given container.
+// For 1-10, a single flowing row. For 11-20, splits into a dashed
+// "ten pack" + the remaining ones — same visual structure preschool
+// teachers use to introduce place value.
+function renderDinoRow(container, count) {
+  container.innerHTML = '';
+  container.classList.toggle('grouped', count > 10);
 
   const dinoKey = window.DINO_KEYS[(count - 1) % window.DINO_KEYS.length];
   const dinoSvg = window.DINO_SVGS[dinoKey];
@@ -244,7 +250,7 @@ function renderDinoRow(count) {
 
   if (count <= 10) {
     for (let i = 0; i < count; i++) {
-      learnDinosEl.appendChild(makeDino(i * 0.08));
+      container.appendChild(makeDino(i * 0.08));
     }
     return;
   }
@@ -252,12 +258,12 @@ function renderDinoRow(count) {
   const tenGroup = document.createElement('div');
   tenGroup.className = 'dino-group ten';
   for (let i = 0; i < 10; i++) tenGroup.appendChild(makeDino(i * 0.04));
-  learnDinosEl.appendChild(tenGroup);
+  container.appendChild(tenGroup);
 
   const extras = document.createElement('div');
   extras.className = 'dino-group extras';
   for (let i = 0; i < count - 10; i++) extras.appendChild(makeDino((10 + i) * 0.04));
-  learnDinosEl.appendChild(extras);
+  container.appendChild(extras);
 }
 
 function speakNumber(n) {
@@ -378,6 +384,67 @@ function celebrate() {
 
   setTimeout(() => celebrateEl.classList.remove('show'), 1500);
 }
+
+// ====== LOOK TEST (see numeral, say it) ======
+// Recognition drill: numeral is shown on the card; dinos + word are hidden
+// until the parent taps "Knew it" or "Help me", at which point everything
+// fades in and the answer is spoken. Score is self-reported.
+const lookNumberEl  = document.getElementById('look-number');
+const lookWordEl    = document.getElementById('look-word');
+const lookDinosEl   = document.getElementById('look-dinos');
+const lookCardEl    = document.getElementById('look-card');
+const lookCorrectEl = document.getElementById('look-score-correct');
+const lookTriesEl   = document.getElementById('look-score-tries');
+
+let lookAnswer = null;
+let lookCorrect = 0;
+let lookTries = 0;
+let lookAccepting = false;
+
+function lookResetScore() {
+  lookCorrect = 0;
+  lookTries = 0;
+  lookCorrectEl.textContent = '0';
+  lookTriesEl.textContent = '0';
+}
+
+function nextLookRound() {
+  speechSynthesis.cancel();
+  const [lo, hi] = rangeBounds();
+  lookAnswer = lo + Math.floor(Math.random() * (hi - lo + 1));
+
+  // Draw the numeral; leave word + dinos empty until reveal.
+  renderChar(lookAnswer, lookNumberEl);
+  lookWordEl.textContent = NUMBER_WORDS[lookAnswer]; // pre-populated; opacity hides it
+  lookDinosEl.innerHTML = '';
+  lookCardEl.classList.remove('revealed');
+
+  lookAccepting = true;
+}
+
+function handleLookAnswer(knew) {
+  if (!lookAccepting) return;
+  lookAccepting = false;
+
+  lookTries++;
+  lookTriesEl.textContent = String(lookTries);
+  if (knew) {
+    lookCorrect++;
+    lookCorrectEl.textContent = String(lookCorrect);
+  }
+
+  // Reveal: fade in the word, populate dinos, speak the answer.
+  renderDinoRow(lookDinosEl, lookAnswer);
+  lookCardEl.classList.add('revealed');
+  say(`${NUMBER_WORDS[lookAnswer]}!`, { rate: 0.9, pitch: 1.3 });
+
+  if (knew) celebrate();
+
+  setTimeout(nextLookRound, 2000);
+}
+
+document.getElementById('look-knew').addEventListener('click', () => handleLookAnswer(true));
+document.getElementById('look-help').addEventListener('click', () => handleLookAnswer(false));
 
 // ====== LETTERS LEARN MODE ======
 let letterIdx = 0;
