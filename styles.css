@@ -176,6 +176,7 @@ button {
 .tile-learn    { background: linear-gradient(160deg, #d4f8e8, #7ed8a8); }
 .tile-test     { background: linear-gradient(160deg, #ffd6e7, #ff9bc4); }
 .tile-look     { background: linear-gradient(160deg, #fff0d6, #ffb380); }
+.tile-rhyming  { background: linear-gradient(160deg, #ffe8f0, #ff8fab); }
 
 .tile-locked {
   opacity: 0.55;
@@ -357,6 +358,90 @@ button {
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
   animation: dinoPop 0.5s ease both;
 }
+
+/* ====== Rhyming ====== */
+.rhyme-card {
+  padding: 28px 18px;
+  min-height: 280px;
+}
+.rhyme-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.rhyme-word {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 18px;
+  background: linear-gradient(160deg, #fff8e1, #ffe082);
+  border-radius: 20px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
+  min-width: clamp(120px, 22vw, 170px);
+  animation: dinoPop 0.5s ease both;
+}
+.rhyme-word + .rhyme-word { animation-delay: 0.15s; }
+.rhyme-emoji {
+  font-size: clamp(3rem, 10vw, 4.5rem);
+  line-height: 1;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.18));
+}
+.rhyme-text {
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-weight: 900;
+  color: #444;
+  text-transform: lowercase;
+  letter-spacing: 1px;
+}
+.rhyme-vs {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  color: #888;
+}
+.rhyme-verdict {
+  margin-top: 22px;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 1px;
+  animation: verdictPop 0.55s ease both;
+}
+.rhyme-verdict.yes {
+  color: #2f9e44;
+  text-shadow: 3px 3px 0 rgba(255, 255, 255, 0.6), 5px 5px 0 rgba(0, 0, 0, 0.1);
+}
+.rhyme-verdict.no {
+  color: #e03131;
+  text-shadow: 3px 3px 0 rgba(255, 255, 255, 0.6), 5px 5px 0 rgba(0, 0, 0, 0.1);
+}
+@keyframes verdictPop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.15) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.rhyme-buttons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 6px;
+}
+.ctrl-btn.rhyme-yes {
+  background: linear-gradient(160deg, #b2f2bb, #51cf66);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+}
+.ctrl-btn.rhyme-no {
+  background: linear-gradient(160deg, #ffc9c9, #ff6b6b);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+}
+.ctrl-btn.correct { animation: correctFlash 0.7s ease; }
+.ctrl-btn.wrong   { animation: wrongShake 0.5s ease; }
 
 /* ====== Phonics ====== */
 .phonics-letters {

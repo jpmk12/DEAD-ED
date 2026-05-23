@@ -132,6 +132,9 @@ const screens = {
   'phonics-menu': document.getElementById('phonics-menu'),
   'phonics-learn': document.getElementById('phonics-learn'),
   'phonics-test': document.getElementById('phonics-test'),
+  'rhyming-menu': document.getElementById('rhyming-menu'),
+  'rhyming-learn': document.getElementById('rhyming-learn'),
+  'rhyming-test': document.getElementById('rhyming-test'),
 };
 
 function showScreen(id) {
@@ -146,6 +149,7 @@ document.querySelectorAll('[data-app]').forEach(btn => {
     if (app === 'counting') showScreen('counting-menu');
     else if (app === 'letters') showScreen('letters-menu');
     else if (app === 'phonics') showScreen('phonics-menu');
+    else if (app === 'rhyming') showScreen('rhyming-menu');
   });
 });
 
@@ -194,6 +198,21 @@ document.querySelectorAll('[data-phonics-mode]').forEach(btn => {
       showScreen('phonics-test');
       phonicsResetScore();
       nextPhonicsTestRound();
+    }
+  });
+});
+
+// rhyming mode picker -> learn / test
+document.querySelectorAll('[data-rhyming-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.rhymingMode;
+    if (mode === 'learn') {
+      showScreen('rhyming-learn');
+      rhymingShow(0);
+    } else if (mode === 'test') {
+      showScreen('rhyming-test');
+      rhymingResetScore();
+      nextRhymingTestRound();
     }
   });
 });
@@ -758,6 +777,127 @@ function handlePhonicsChoice(btn, item) {
     setTimeout(() => btn.classList.remove('wrong'), 600);
   }
 }
+
+// ====== RHYMING LEARN MODE ======
+const rhymeEmoji1El   = document.getElementById('rhyme-emoji-1');
+const rhymeText1El    = document.getElementById('rhyme-text-1');
+const rhymeEmoji2El   = document.getElementById('rhyme-emoji-2');
+const rhymeText2El    = document.getElementById('rhyme-text-2');
+const rhymeVerdictEl  = document.getElementById('rhyme-verdict');
+const rhymingCardEl   = document.getElementById('rhyming-card');
+
+let rhymeIdx = 0;
+let rhymePlayToken = 0;
+
+function rhymingShow(idx) {
+  const total = window.RHYME_PAIRS.length;
+  rhymeIdx = ((idx % total) + total) % total;
+  const pair = window.RHYME_PAIRS[rhymeIdx];
+
+  rhymeEmoji1El.textContent = pair.e1;
+  rhymeText1El.textContent  = pair.w1.toLowerCase();
+  rhymeEmoji2El.textContent = pair.e2;
+  rhymeText2El.textContent  = pair.w2.toLowerCase();
+
+  rhymeVerdictEl.textContent = pair.rhyme ? 'They Rhyme!' : "They Don't Rhyme";
+  rhymeVerdictEl.className   = 'rhyme-verdict ' + (pair.rhyme ? 'yes' : 'no');
+
+  // Replay the verdict pop animation
+  rhymeVerdictEl.style.animation = 'none';
+  void rhymeVerdictEl.offsetWidth;
+  rhymeVerdictEl.style.animation = '';
+
+  // Card pop
+  rhymingCardEl.classList.remove('pop');
+  void rhymingCardEl.offsetWidth;
+  rhymingCardEl.classList.add('pop');
+
+  speakRhymePair(pair, { withVerdict: true });
+}
+
+async function speakRhymePair(pair, opts = {}) {
+  speechSynthesis.cancel();
+  const token = ++rhymePlayToken;
+  await sayAsync(pair.w1, { rate: 0.85, pitch: 1.25 });
+  if (token !== rhymePlayToken) return;
+  await sleep(220);
+  await sayAsync(pair.w2, { rate: 0.85, pitch: 1.25 });
+  if (token !== rhymePlayToken || !opts.withVerdict) return;
+  await sleep(380);
+  await sayAsync(pair.rhyme ? 'They rhyme!' : "They don't rhyme.", { rate: 0.85, pitch: 1.3 });
+}
+
+document.getElementById('rhyming-prev').addEventListener('click', () => rhymingShow(rhymeIdx - 1));
+document.getElementById('rhyming-next').addEventListener('click', () => rhymingShow(rhymeIdx + 1));
+document.getElementById('rhyming-say').addEventListener('click', () => speakRhymePair(window.RHYME_PAIRS[rhymeIdx], { withVerdict: true }));
+rhymingCardEl.addEventListener('click', () => speakRhymePair(window.RHYME_PAIRS[rhymeIdx], { withVerdict: true }));
+
+// ====== RHYMING TEST MODE ======
+const rhymeTestEmoji1El = document.getElementById('rhyme-test-emoji-1');
+const rhymeTestText1El  = document.getElementById('rhyme-test-text-1');
+const rhymeTestEmoji2El = document.getElementById('rhyme-test-emoji-2');
+const rhymeTestText2El  = document.getElementById('rhyme-test-text-2');
+const rhymeYesBtn       = document.getElementById('rhyme-yes-btn');
+const rhymeNoBtn        = document.getElementById('rhyme-no-btn');
+const rhymeCorrectEl    = document.getElementById('rhyming-score-correct');
+const rhymeTriesEl      = document.getElementById('rhyming-score-tries');
+
+let rhymeAnswer = null;
+let rhymeCorrect = 0;
+let rhymeTries = 0;
+let rhymeAccepting = false;
+
+function rhymingResetScore() {
+  rhymeCorrect = 0;
+  rhymeTries = 0;
+  rhymeCorrectEl.textContent = '0';
+  rhymeTriesEl.textContent = '0';
+}
+
+function nextRhymingTestRound() {
+  rhymeAccepting = true;
+  rhymeAnswer = window.RHYME_PAIRS[Math.floor(Math.random() * window.RHYME_PAIRS.length)];
+
+  rhymeTestEmoji1El.textContent = rhymeAnswer.e1;
+  rhymeTestText1El.textContent  = rhymeAnswer.w1.toLowerCase();
+  rhymeTestEmoji2El.textContent = rhymeAnswer.e2;
+  rhymeTestText2El.textContent  = rhymeAnswer.w2.toLowerCase();
+
+  // Reset any lingering button flash from the previous round
+  rhymeYesBtn.classList.remove('correct', 'wrong');
+  rhymeNoBtn.classList.remove('correct', 'wrong');
+
+  setTimeout(() => speakRhymePair(rhymeAnswer), 350);
+}
+
+document.getElementById('rhyming-test-say').addEventListener('click', () => {
+  if (rhymeAnswer) speakRhymePair(rhymeAnswer);
+});
+
+function handleRhymeAnswer(btn, saidYes) {
+  if (!rhymeAccepting) return;
+  rhymeTries++;
+  rhymeTriesEl.textContent = String(rhymeTries);
+
+  const isCorrect = saidYes === rhymeAnswer.rhyme;
+  if (isCorrect) {
+    rhymeAccepting = false;
+    rhymeCorrect++;
+    rhymeCorrectEl.textContent = String(rhymeCorrect);
+    btn.classList.add('correct');
+    say(saidYes ? 'Yes! They rhyme! Great job!' : "Right! They don't rhyme! Great job!",
+        { rate: 0.9, pitch: 1.3 });
+    celebrate();
+    setTimeout(nextRhymingTestRound, 1800);
+  } else {
+    btn.classList.add('wrong');
+    say('Try again!', { rate: 0.95, pitch: 1.2 });
+    setTimeout(() => btn.classList.remove('wrong'), 600);
+  }
+}
+
+rhymeYesBtn.addEventListener('click', () => handleRhymeAnswer(rhymeYesBtn, true));
+rhymeNoBtn .addEventListener('click', () => handleRhymeAnswer(rhymeNoBtn,  false));
 
 // ====== Voice priming ======
 // Mobile browsers require a user gesture before TTS will work. The first tap

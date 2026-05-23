@@ -39,10 +39,10 @@
         <div class="tile-sub">A to Z</div>
       </button>
 
-      <button class="tile tile-locked" disabled>
-        <div class="tile-emoji">🎨</div>
-        <div class="tile-label">Colors</div>
-        <div class="tile-sub">Coming soon</div>
+      <button class="tile tile-rhyming" data-app="rhyming">
+        <div class="tile-emoji">🎵</div>
+        <div class="tile-label">Rhyming</div>
+        <div class="tile-sub">Words that match</div>
       </button>
 
       <button class="tile tile-phonics" data-app="phonics">
@@ -287,6 +287,94 @@
     </div>
   </section>
 
+  <!-- ============ RHYMING: MODE PICKER ============ -->
+  <section id="rhyming-menu" class="screen">
+    <button class="back-btn" data-back="landing">← Back</button>
+    <header class="landing-header">
+      <h1 class="title">
+        <span class="title-dino" data-dino="bronto"></span>
+        Rhyming!
+      </h1>
+      <p class="subtitle">Words that sound the same</p>
+    </header>
+
+    <div class="tile-grid two-up">
+      <button class="tile tile-learn" data-rhyming-mode="learn">
+        <div class="tile-emoji">📚</div>
+        <div class="tile-label">Learn</div>
+        <div class="tile-sub">See & hear pairs</div>
+      </button>
+
+      <button class="tile tile-test" data-rhyming-mode="test">
+        <div class="tile-emoji">🎯</div>
+        <div class="tile-label">Test</div>
+        <div class="tile-sub">Do they rhyme?</div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ RHYMING LEARN MODE ============ -->
+  <section id="rhyming-learn" class="screen">
+    <button class="back-btn" data-back="rhyming-menu">← Back</button>
+
+    <div class="flashcard-area">
+      <div id="rhyming-card" class="flashcard rhyme-card">
+        <div class="rhyme-pair">
+          <div class="rhyme-word">
+            <div class="rhyme-emoji" id="rhyme-emoji-1">🐱</div>
+            <div class="rhyme-text" id="rhyme-text-1">cat</div>
+          </div>
+          <div class="rhyme-vs">&</div>
+          <div class="rhyme-word">
+            <div class="rhyme-emoji" id="rhyme-emoji-2">🎩</div>
+            <div class="rhyme-text" id="rhyme-text-2">hat</div>
+          </div>
+        </div>
+        <div class="rhyme-verdict yes" id="rhyme-verdict">They Rhyme!</div>
+      </div>
+
+      <div class="learn-controls">
+        <button class="ctrl-btn ctrl-prev" id="rhyming-prev" aria-label="Previous">◀</button>
+        <button class="ctrl-btn ctrl-say" id="rhyming-say" aria-label="Say again">🔊 Say it!</button>
+        <button class="ctrl-btn ctrl-next" id="rhyming-next" aria-label="Next">▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RHYMING TEST MODE ============ -->
+  <section id="rhyming-test" class="screen">
+    <button class="back-btn" data-back="rhyming-menu">← Back</button>
+
+    <div class="flashcard-area">
+      <div class="test-instruction look-instruction">Do these words rhyme?</div>
+      <button class="ctrl-btn ctrl-say big-say" id="rhyming-test-say">🔊 Say it again</button>
+
+      <div id="rhyming-test-card" class="flashcard rhyme-card">
+        <div class="rhyme-pair">
+          <div class="rhyme-word">
+            <div class="rhyme-emoji" id="rhyme-test-emoji-1">🐱</div>
+            <div class="rhyme-text" id="rhyme-test-text-1">cat</div>
+          </div>
+          <div class="rhyme-vs">?</div>
+          <div class="rhyme-word">
+            <div class="rhyme-emoji" id="rhyme-test-emoji-2">🎩</div>
+            <div class="rhyme-text" id="rhyme-test-text-2">hat</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rhyme-buttons">
+        <button class="ctrl-btn rhyme-yes" id="rhyme-yes-btn">✓ Yes, rhyme!</button>
+        <button class="ctrl-btn rhyme-no"  id="rhyme-no-btn">✗ Don't rhyme</button>
+      </div>
+
+      <div class="score-row">
+        <div class="score-pill">⭐ <span id="rhyming-score-correct">0</span></div>
+        <div class="score-pill alt">🦴 <span id="rhyming-score-tries">0</span></div>
+      </div>
+    </div>
+  </section>
+
   <!-- shared celebration overlay (used by both test modes) -->
   <div id="celebrate" class="celebrate" aria-hidden="true">
     <div class="celebrate-text" id="celebrate-text">Yay!</div>
@@ -296,6 +384,7 @@
   <script src="dinos.js"></script>
   <script src="chars.js"></script>
   <script src="phonics.js"></script>
+  <script src="rhyming.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
