@@ -283,7 +283,38 @@ button {
   font-size: clamp(1.6rem, 5vw, 2.4rem);
   font-weight: bold;
   color: #4a4a4a;
-  text-transform: capitalize;
+}
+
+/* Case toggle (ABC / abc) on the Letters menu */
+.case-toggle {
+  display: inline-flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.12);
+  margin: 0 0 24px;
+  z-index: 1;
+}
+.case-btn {
+  padding: 10px 28px;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #888;
+  background: transparent;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  font-family: inherit;
+  min-width: 84px;
+}
+.case-btn.active {
+  background: linear-gradient(160deg, #b197fc, #9775fa);
+  color: #fff;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+}
+.case-btn:active:not(.active) {
+  transform: scale(0.95);
 }
 
 /* Letter-card "is for X" thumbnail (emoji-based) */

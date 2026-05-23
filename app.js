@@ -334,6 +334,20 @@ function celebrate() {
 
 // ====== LETTERS LEARN MODE ======
 let letterIdx = 0;
+let letterCase = 'upper'; // 'upper' | 'lower' — shared by Learn and Test
+
+// Case toggle (ABC / abc) on the Letters menu screen
+document.querySelectorAll('.case-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.case-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    letterCase = btn.dataset.case;
+  });
+});
+
+function castCase(upper) {
+  return letterCase === 'lower' ? upper.toLowerCase() : upper;
+}
 
 const lettersLetterEl = document.getElementById('letters-letter');
 const lettersImgEl    = document.getElementById('letters-img');
@@ -342,12 +356,13 @@ const lettersCardEl   = document.getElementById('letters-card');
 
 function lettersShow(idx) {
   letterIdx = ((idx % 26) + 26) % 26;
-  const letter = window.LETTERS[letterIdx];
-  const info   = window.LETTER_INFO[letter];
+  const upper = window.LETTERS[letterIdx];
+  const letter = castCase(upper);
+  const info  = window.LETTER_INFO[upper];
 
   renderChar(letter, lettersLetterEl);
   lettersImgEl.textContent = info.emoji;
-  lettersWordEl.textContent = `${letter} is for ${info.word}`;
+  lettersWordEl.textContent = `${letter} is for ${letterCase === 'lower' ? info.word.toLowerCase() : info.word}`;
 
   // retrigger the emoji pop animation
   lettersImgEl.style.animation = 'none';
@@ -359,13 +374,16 @@ function lettersShow(idx) {
   void lettersCardEl.offsetWidth;
   lettersCardEl.classList.add('pop');
 
-  speakLetter(letter);
+  speakLetter(upper);
 }
 
 function speakLetter(letter) {
   const info = window.LETTER_INFO[letter];
   const name = window.LETTER_NAMES[letter];
-  say(`This is the letter ${name}. ${name} is for ${info.word}.`, { rate: 0.8, pitch: 1.25 });
+  const lead = letterCase === 'lower'
+    ? `This is lowercase ${name}.`
+    : `This is capital ${name}.`;
+  say(`${lead} ${name} is for ${info.word}.`, { rate: 0.8, pitch: 1.25 });
 }
 
 document.getElementById('letters-prev').addEventListener('click', () => lettersShow(letterIdx - 1));
@@ -392,6 +410,8 @@ function lettersResetScore() {
 
 function nextLettersTestRound() {
   lettersAccepting = true;
+  // lettersAnswer is always stored as the uppercase key (used to look up
+  // the phonetic name in LETTER_NAMES); choice tiles render in current case.
   lettersAnswer = window.LETTERS[Math.floor(Math.random() * 26)];
 
   const pool = new Set([lettersAnswer]);
@@ -400,9 +420,10 @@ function nextLettersTestRound() {
 
   lettersChoicesEl.innerHTML = '';
   choices.forEach((l, i) => {
+    const display = castCase(l);
     const btn = document.createElement('button');
     btn.className = `choice c${i + 1}`;
-    btn.textContent = l;
+    btn.textContent = display;
     btn.dataset.value = l;
     btn.addEventListener('click', () => handleLetterChoice(btn, l));
     lettersChoicesEl.appendChild(btn);
@@ -413,7 +434,8 @@ function nextLettersTestRound() {
 
 function sayLettersTestPrompt() {
   const name = window.LETTER_NAMES[lettersAnswer];
-  say(`Can you find... ${name}?`, { rate: 0.85, pitch: 1.25 });
+  const lead = letterCase === 'lower' ? 'lowercase' : 'capital';
+  say(`Can you find ${lead} ${name}?`, { rate: 0.85, pitch: 1.25 });
 }
 
 document.getElementById('letters-test-say').addEventListener('click', sayLettersTestPrompt);
@@ -429,7 +451,8 @@ function handleLetterChoice(btn, value) {
     lettersCorrect++;
     lettersCorrectEl.textContent = String(lettersCorrect);
     const name = window.LETTER_NAMES[lettersAnswer];
-    say(`Yes! Letter ${name}! Great job!`, { rate: 0.9, pitch: 1.3 });
+    const lead = letterCase === 'lower' ? 'lowercase' : 'capital';
+    say(`Yes! ${lead} ${name}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
     setTimeout(nextLettersTestRound, 1800);
   } else {
