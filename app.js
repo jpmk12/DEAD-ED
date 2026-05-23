@@ -1,8 +1,25 @@
 // ====== Data ======
 const NUMBER_WORDS = [
   '', 'One', 'Two', 'Three', 'Four', 'Five',
-  'Six', 'Seven', 'Eight', 'Nine', 'Ten'
+  'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+  'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen',
+  'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'
 ];
+
+// Selected counting range, toggled on the Counting menu. Shared by Learn and Test.
+let numberRange = '1-10';
+function rangeBounds() {
+  return numberRange === '11-20' ? [11, 20] : [1, 10];
+}
+
+// Range toggle (1-10 / 11-20) on the Counting menu screen
+document.querySelectorAll('.toggle-numbers .case-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-numbers .case-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    numberRange = btn.dataset.range;
+  });
+});
 
 // Emoji-based extras used for the confetti burst (cheap to render lots of).
 const EXTRAS = ['🥚', '🌴', '🌋', '🦴', '⭐', '🦖', '🦕'];
@@ -137,7 +154,7 @@ document.querySelectorAll('[data-mode]').forEach(btn => {
     const mode = btn.dataset.mode;
     if (mode === 'learn') {
       showScreen('learn-mode');
-      learnShow(1);
+      learnShow(rangeBounds()[0]);
     } else if (mode === 'test') {
       showScreen('test-mode');
       resetScore();
@@ -193,21 +210,12 @@ const learnWordEl   = document.getElementById('learn-word');
 const learnCardEl   = document.getElementById('learn-card');
 
 function learnShow(n) {
-  learnNumber = Math.max(1, Math.min(10, n));
+  const [lo, hi] = rangeBounds();
+  learnNumber = Math.max(lo, Math.min(hi, n));
   renderChar(learnNumber, learnNumberEl);
   learnWordEl.textContent = NUMBER_WORDS[learnNumber];
 
-  // populate dino row with an SVG dino per item, all the same species per card
-  learnDinosEl.innerHTML = '';
-  const dinoKey = window.DINO_KEYS[(learnNumber - 1) % window.DINO_KEYS.length];
-  const dinoSvg = window.DINO_SVGS[dinoKey];
-  for (let i = 0; i < learnNumber; i++) {
-    const wrap = document.createElement('div');
-    wrap.className = 'dino';
-    wrap.innerHTML = dinoSvg;
-    wrap.style.animationDelay = `${i * 0.08}s`;
-    learnDinosEl.appendChild(wrap);
-  }
+  renderDinoRow(learnNumber);
 
   // replay card pop animation
   learnCardEl.classList.remove('pop');
@@ -217,15 +225,52 @@ function learnShow(n) {
   speakNumber(learnNumber);
 }
 
+// Lays out dinos for the current count. For 1-10, a single flowing row.
+// For 11-20, splits into a dashed "ten pack" + the remaining ones — same
+// visual structure preschool teachers use to introduce place value.
+function renderDinoRow(count) {
+  learnDinosEl.innerHTML = '';
+  learnDinosEl.classList.toggle('grouped', count > 10);
+
+  const dinoKey = window.DINO_KEYS[(count - 1) % window.DINO_KEYS.length];
+  const dinoSvg = window.DINO_SVGS[dinoKey];
+  const makeDino = (delayStep) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'dino';
+    wrap.innerHTML = dinoSvg;
+    wrap.style.animationDelay = `${delayStep}s`;
+    return wrap;
+  };
+
+  if (count <= 10) {
+    for (let i = 0; i < count; i++) {
+      learnDinosEl.appendChild(makeDino(i * 0.08));
+    }
+    return;
+  }
+
+  const tenGroup = document.createElement('div');
+  tenGroup.className = 'dino-group ten';
+  for (let i = 0; i < 10; i++) tenGroup.appendChild(makeDino(i * 0.04));
+  learnDinosEl.appendChild(tenGroup);
+
+  const extras = document.createElement('div');
+  extras.className = 'dino-group extras';
+  for (let i = 0; i < count - 10; i++) extras.appendChild(makeDino((10 + i) * 0.04));
+  learnDinosEl.appendChild(extras);
+}
+
 function speakNumber(n) {
   say(`This is the number ${NUMBER_WORDS[n]}.`, { rate: 0.8, pitch: 1.25 });
 }
 
 document.getElementById('learn-prev').addEventListener('click', () => {
-  learnShow(learnNumber === 1 ? 10 : learnNumber - 1);
+  const [lo, hi] = rangeBounds();
+  learnShow(learnNumber === lo ? hi : learnNumber - 1);
 });
 document.getElementById('learn-next').addEventListener('click', () => {
-  learnShow(learnNumber === 10 ? 1 : learnNumber + 1);
+  const [lo, hi] = rangeBounds();
+  learnShow(learnNumber === hi ? lo : learnNumber + 1);
 });
 document.getElementById('learn-say').addEventListener('click', () => {
   speakNumber(learnNumber);
@@ -256,11 +301,13 @@ function resetScore() {
 
 function nextTestRound() {
   acceptingAnswer = true;
-  currentAnswer = Math.floor(Math.random() * 10) + 1;
+  const [lo, hi] = rangeBounds();
+  const pick = () => lo + Math.floor(Math.random() * (hi - lo + 1));
+  currentAnswer = pick();
 
   // Build 4 unique choices including the correct one
   const pool = new Set([currentAnswer]);
-  while (pool.size < 4) pool.add(Math.floor(Math.random() * 10) + 1);
+  while (pool.size < 4) pool.add(pick());
   const choices = shuffle([...pool]);
 
   choicesEl.innerHTML = '';
@@ -337,9 +384,9 @@ let letterIdx = 0;
 let letterCase = 'upper'; // 'upper' | 'lower' — shared by Learn and Test
 
 // Case toggle (ABC / abc) on the Letters menu screen
-document.querySelectorAll('.case-btn').forEach(btn => {
+document.querySelectorAll('.toggle-letters .case-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.case-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.toggle-letters .case-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     letterCase = btn.dataset.case;
   });

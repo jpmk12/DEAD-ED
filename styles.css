@@ -273,6 +273,30 @@ button {
   filter: drop-shadow(0 3px 4px rgba(0,0,0,0.18));
 }
 .dino-row .dino svg { width: 100%; height: 100%; display: block; }
+
+/* When count > 10, stack a "ten pack" group above the extras to teach
+   place value (e.g., 17 = 10 + 7). */
+.dino-row.grouped {
+  flex-direction: column;
+  gap: 10px;
+}
+.dino-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+}
+.dino-group.ten {
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: rgba(255, 220, 120, 0.25);
+  border: 2.5px dashed rgba(230, 160, 50, 0.6);
+}
+.dino-row.grouped .dino {
+  width: clamp(2.2rem, 5vw, 2.8rem);
+  height: clamp(2.2rem, 5vw, 2.8rem);
+}
 @keyframes dinoPop {
   0%   { transform: scale(0) rotate(-180deg); opacity: 0; }
   70%  { transform: scale(1.2) rotate(10deg); opacity: 1; }
@@ -312,6 +336,10 @@ button {
   color: #fff;
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+}
+/* Counting uses the yellow palette to match its tile */
+.case-toggle.toggle-numbers .case-btn.active {
+  background: linear-gradient(160deg, #ffd43b, #ffa94d);
 }
 .case-btn:active:not(.active) {
   transform: scale(0.95);
