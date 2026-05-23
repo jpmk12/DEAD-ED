@@ -25,8 +25,12 @@ function renderChar(str, container) {
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
   const defs = document.createElementNS(SVG_NS, 'defs');
+  // gradientUnits="userSpaceOnUse" so the gradient spans the SVG viewBox
+  // top-to-bottom rather than each path's own bbox. Without this, paths
+  // with zero-width bboxes (vertical-line strokes like in 4, I, T, H)
+  // render invisible because the bbox-relative gradient has no area.
   defs.innerHTML = `
-    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="${gradId}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="140">
       <stop offset="0" stop-color="#ff6b6b"/>
       <stop offset="0.5" stop-color="#ffa94d"/>
       <stop offset="1" stop-color="#ffd43b"/>
