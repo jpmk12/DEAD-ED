@@ -19,16 +19,16 @@
 
     <header class="landing-header">
       <h1 class="title">
-        <span class="title-dino">🦖</span>
+        <span class="title-dino" data-dino="trex"></span>
         Dino Learn
-        <span class="title-dino flip">🦕</span>
+        <span class="title-dino flip" data-dino="bronto"></span>
       </h1>
       <p class="subtitle">Pick something fun to learn!</p>
     </header>
 
     <div class="tile-grid">
       <button class="tile tile-counting" data-app="counting">
-        <div class="tile-emoji">🦖</div>
+        <div class="tile-emoji tile-svg" data-dino="trike"></div>
         <div class="tile-label">Counting</div>
         <div class="tile-sub">Numbers 1–10</div>
       </button>
@@ -58,7 +58,7 @@
     <button class="back-btn" data-back="landing">← Back</button>
     <header class="landing-header">
       <h1 class="title">
-        <span class="title-dino">🦖</span>
+        <span class="title-dino" data-dino="stego"></span>
         Counting Time!
       </h1>
       <p class="subtitle">How do you want to play?</p>
@@ -123,6 +123,7 @@
     </div>
   </section>
 
+  <script src="dinos.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

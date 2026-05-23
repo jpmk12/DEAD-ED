@@ -4,10 +4,72 @@ const NUMBER_WORDS = [
   'Six', 'Seven', 'Eight', 'Nine', 'Ten'
 ];
 
-// Dinos used to visually count out the number on the learn card.
-// Mixed creatures keep each card feeling a little different.
-const DINOS = ['🦖', '🦕', '🐉', '🦎'];
-const EXTRAS = ['🥚', '🌴', '🌋', '🦴', '⭐'];
+// Emoji-based extras used for the confetti burst (cheap to render lots of).
+const EXTRAS = ['🥚', '🌴', '🌋', '🦴', '⭐', '🦖', '🦕'];
+
+// SVG path data for each digit, drawn the way a child writes them
+// (top-down, in one stroke where possible). viewBox per digit is 100x140.
+const DIGIT_PATHS = {
+  '0': ['M 50 15 Q 20 15 20 70 Q 20 130 50 130 Q 80 130 80 70 Q 80 15 50 15'],
+  '1': ['M 28 35 L 55 15 L 55 130'],
+  '2': ['M 18 35 Q 18 10 50 10 Q 82 10 82 38 Q 82 55 50 75 L 18 130 L 82 130'],
+  '3': ['M 20 28 Q 30 10 55 10 Q 82 10 82 35 Q 82 55 50 65 Q 82 75 82 100 Q 82 130 55 130 Q 25 130 18 110'],
+  // 4 is two strokes (the body, then the vertical bar)
+  '4': ['M 70 10 L 18 80 L 85 80', 'M 70 30 L 70 130'],
+  '5': ['M 75 15 L 30 15 L 25 65 Q 50 50 72 70 Q 85 85 75 108 Q 65 130 35 130 Q 18 125 15 110'],
+  '6': ['M 75 25 Q 50 15 32 50 Q 15 80 25 110 Q 35 130 55 130 Q 82 130 82 100 Q 82 72 55 72 Q 30 72 25 95'],
+  '7': ['M 18 15 L 82 15 L 38 130'],
+  '8': ['M 50 70 Q 22 70 22 40 Q 22 12 50 12 Q 78 12 78 40 Q 78 70 50 70 Q 18 70 18 100 Q 18 132 50 132 Q 82 132 82 100 Q 82 70 50 70'],
+  '9': ['M 78 50 Q 78 15 50 15 Q 22 15 22 40 Q 22 65 50 65 Q 78 65 78 50 L 78 130'],
+};
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function renderLearnNumber(num) {
+  const digits = String(num).split('');
+  learnNumberEl.innerHTML = '';
+
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${digits.length * 100} 140`);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // gradient + drop shadow defs (referenced by .big-number path styles)
+  const defs = document.createElementNS(SVG_NS, 'defs');
+  defs.innerHTML = `
+    <linearGradient id="numGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff6b6b"/>
+      <stop offset="0.5" stop-color="#ffa94d"/>
+      <stop offset="1" stop-color="#ffd43b"/>
+    </linearGradient>
+  `;
+  svg.appendChild(defs);
+
+  // Each digit gets its own group offset horizontally. Strokes within a digit
+  // animate in sequence so e.g. the "4" draws the body then the vertical bar.
+  let cumulativeDelay = 0;
+  digits.forEach((d, digitIdx) => {
+    const strokes = DIGIT_PATHS[d] || [];
+    strokes.forEach((data, strokeIdx) => {
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', data);
+      path.setAttribute('transform', `translate(${digitIdx * 100} 0)`);
+      svg.appendChild(path);
+
+      // Set CSS custom props BEFORE applying the .draw class so the very first
+      // frame already has the correct dasharray/dashoffset (otherwise you'd see
+      // a fully-drawn digit pop in for one frame before the animation begins).
+      const len = path.getTotalLength();
+      path.style.setProperty('--len', len);
+      path.style.setProperty('--delay', `${cumulativeDelay}s`);
+      path.classList.add('draw');
+      // Stagger: each stroke takes ~1.1s; nudge the next one slightly earlier
+      // so the whole number doesn't feel sluggish.
+      cumulativeDelay += strokeIdx === strokes.length - 1 ? 0.8 : 0.5;
+    });
+  });
+
+  learnNumberEl.appendChild(svg);
+}
 
 // ====== Speech ======
 // Web Speech API. We pick a voice once it's loaded.
@@ -38,6 +100,14 @@ function say(text, { rate = 0.85, pitch = 1.2 } = {}) {
   u.volume = 1;
   speechSynthesis.speak(u);
 }
+
+// ====== Inject static SVGs ======
+// Any element with data-dino="<key>" gets its inner HTML replaced with that
+// dino's SVG markup at load time.
+document.querySelectorAll('[data-dino]').forEach(el => {
+  const key = el.dataset.dino;
+  if (window.DINO_SVGS[key]) el.innerHTML = window.DINO_SVGS[key];
+});
 
 // ====== Screen navigation ======
 const screens = {
@@ -93,17 +163,19 @@ const learnCardEl   = document.getElementById('learn-card');
 
 function learnShow(n) {
   learnNumber = Math.max(1, Math.min(10, n));
-  learnNumberEl.textContent = learnNumber;
+  renderLearnNumber(learnNumber);
   learnWordEl.textContent = NUMBER_WORDS[learnNumber];
 
-  // populate dino row
+  // populate dino row with an SVG dino per item, all the same species per card
   learnDinosEl.innerHTML = '';
-  const dino = DINOS[(learnNumber - 1) % DINOS.length];
+  const dinoKey = window.DINO_KEYS[(learnNumber - 1) % window.DINO_KEYS.length];
+  const dinoSvg = window.DINO_SVGS[dinoKey];
   for (let i = 0; i < learnNumber; i++) {
-    const s = document.createElement('span');
-    s.textContent = dino;
-    s.style.animationDelay = `${i * 0.08}s`;
-    learnDinosEl.appendChild(s);
+    const wrap = document.createElement('div');
+    wrap.className = 'dino';
+    wrap.innerHTML = dinoSvg;
+    wrap.style.animationDelay = `${i * 0.08}s`;
+    learnDinosEl.appendChild(wrap);
   }
 
   // replay card pop animation
@@ -115,7 +187,7 @@ function learnShow(n) {
 }
 
 function speakNumber(n) {
-  say(NUMBER_WORDS[n], { rate: 0.8, pitch: 1.25 });
+  say(`This is the number ${NUMBER_WORDS[n]}.`, { rate: 0.8, pitch: 1.25 });
 }
 
 document.getElementById('learn-prev').addEventListener('click', () => {
