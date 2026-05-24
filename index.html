@@ -56,6 +56,12 @@
         <div class="tile-label">Shapes</div>
         <div class="tile-sub">9 shapes to know</div>
       </button>
+
+      <button class="tile tile-name" data-app="name">
+        <div class="tile-emoji">✏️</div>
+        <div class="tile-label">Write My Name</div>
+        <div class="tile-sub">Trace each letter</div>
+      </button>
     </div>
   </section>
 
@@ -476,6 +482,47 @@
         <div class="score-pill">⭐ <span id="shapes-look-correct">0</span></div>
         <div class="score-pill alt">🦴 <span id="shapes-look-tries">0</span></div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ NAME TRACING: MENU ============ -->
+  <section id="tracing-menu" class="screen">
+    <button class="back-btn" data-back="landing">← Back</button>
+    <header class="landing-header">
+      <h1 class="title">
+        <span class="title-dino" data-dino="trike"></span>
+        My Name
+      </h1>
+      <p class="subtitle">Trace each letter with your finger!</p>
+    </header>
+
+    <div class="name-setup">
+      <label for="kid-name-input" class="name-label">Whose name?</label>
+      <input type="text" id="kid-name-input" class="name-input"
+             maxlength="12" autocomplete="off" spellcheck="false"
+             placeholder="Type a name" />
+      <button class="tile tile-test" id="start-tracing-btn">
+        <div class="tile-emoji">✏️</div>
+        <div class="tile-label">Start Tracing</div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ NAME TRACING: TRACE SCREEN ============ -->
+  <section id="tracing-mode" class="screen">
+    <button class="back-btn" data-back="tracing-menu">← Back</button>
+
+    <div class="trace-progress" id="trace-progress"></div>
+
+    <div class="trace-card" id="trace-card">
+      <div class="trace-template" id="trace-template"></div>
+      <canvas id="trace-canvas"></canvas>
+    </div>
+
+    <div class="trace-controls">
+      <button class="ctrl-btn ctrl-prev" id="trace-clear">🧹 Clear</button>
+      <button class="ctrl-btn ctrl-say" id="trace-say">🔊 Hear it</button>
+      <button class="ctrl-btn ctrl-next" id="trace-next">Next ▶</button>
     </div>
   </section>
 

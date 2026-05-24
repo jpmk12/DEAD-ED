@@ -139,6 +139,8 @@ const screens = {
   'shapes-learn': document.getElementById('shapes-learn'),
   'shapes-test': document.getElementById('shapes-test'),
   'shapes-look': document.getElementById('shapes-look'),
+  'tracing-menu': document.getElementById('tracing-menu'),
+  'tracing-mode': document.getElementById('tracing-mode'),
 };
 
 function showScreen(id) {
@@ -155,6 +157,10 @@ document.querySelectorAll('[data-app]').forEach(btn => {
     else if (app === 'phonics') showScreen('phonics-menu');
     else if (app === 'rhyming') showScreen('rhyming-menu');
     else if (app === 'shapes') showScreen('shapes-menu');
+    else if (app === 'name') {
+      kidNameInput.value = getKidName();
+      showScreen('tracing-menu');
+    }
   });
 });
 
@@ -1105,6 +1111,187 @@ function handleShapesLookAnswer(knew) {
 
 document.getElementById('shapes-look-knew').addEventListener('click', () => handleShapesLookAnswer(true));
 document.getElementById('shapes-look-help').addEventListener('click', () => handleShapesLookAnswer(false));
+
+// ====== NAME TRACING ======
+// Parent enters the name on the menu screen; it's persisted in localStorage.
+// Tracing screen shows one letter at a time as a fat gray "track" (the
+// existing CHAR_PATHS rendered with a wide light-gray stroke). A canvas
+// overlay captures the kid's finger drawing — no strict hit detection,
+// just paint-by-tracing so it stays fun for 3-5 year olds.
+
+const KID_NAME_KEY = 'dinoLearnKidName';
+const KID_NAME_DEFAULT = 'DECLAN';
+function getKidName() {
+  const stored = (localStorage.getItem(KID_NAME_KEY) || '').toUpperCase();
+  return stored || KID_NAME_DEFAULT;
+}
+function setKidName(name) {
+  const cleaned = String(name || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (cleaned) localStorage.setItem(KID_NAME_KEY, cleaned);
+  return cleaned;
+}
+
+const kidNameInput        = document.getElementById('kid-name-input');
+const traceProgressEl     = document.getElementById('trace-progress');
+const traceTemplateEl     = document.getElementById('trace-template');
+const traceCardEl         = document.getElementById('trace-card');
+const traceCanvas         = document.getElementById('trace-canvas');
+const traceCtx            = traceCanvas.getContext('2d');
+
+// Auto-uppercase as user types so it matches the template letters
+kidNameInput.addEventListener('input', () => {
+  const start = kidNameInput.selectionStart;
+  kidNameInput.value = kidNameInput.value.toUpperCase().replace(/[^A-Z ]/g, '');
+  kidNameInput.setSelectionRange(start, start);
+});
+
+// Rotate through these colors as the kid traces successive letters
+const TRACE_COLORS = ['#ff6b6b', '#ffa94d', '#fab005', '#51cf66', '#339af0', '#b197fc', '#ff8fab'];
+
+let traceLetters = [];
+let traceLetterIdx = 0;
+
+document.getElementById('start-tracing-btn').addEventListener('click', () => {
+  const cleaned = setKidName(kidNameInput.value) || KID_NAME_DEFAULT;
+  kidNameInput.value = cleaned;
+  traceLetters = cleaned.split('');
+  traceLetterIdx = 0;
+  showScreen('tracing-mode');
+  // Defer setup until the screen is on-screen so the canvas has its real size
+  requestAnimationFrame(() => showTraceLetter(0));
+});
+
+function showTraceLetter(idx) {
+  traceLetterIdx = Math.max(0, Math.min(traceLetters.length - 1, idx));
+  const letter = traceLetters[traceLetterIdx];
+
+  // Render the gray template (reusing CHAR_PATHS from chars.js)
+  renderTraceTemplate(letter, traceTemplateEl);
+
+  // Render progress chips
+  traceProgressEl.innerHTML = '';
+  traceLetters.forEach((l, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'trace-chip';
+    if (i < traceLetterIdx) chip.classList.add('done');
+    if (i === traceLetterIdx) chip.classList.add('current');
+    chip.textContent = l;
+    traceProgressEl.appendChild(chip);
+  });
+
+  // Card pop
+  traceCardEl.style.animation = 'none';
+  void traceCardEl.offsetWidth;
+  traceCardEl.style.animation = '';
+
+  // Clear and resize the canvas; pick the next color
+  resetTraceCanvas();
+  traceCtx.strokeStyle = TRACE_COLORS[traceLetterIdx % TRACE_COLORS.length];
+
+  // Speak the letter so they hear what they're tracing
+  const name = (window.LETTER_NAMES && window.LETTER_NAMES[letter]) || letter;
+  say(`${name}!`, { rate: 0.85, pitch: 1.25 });
+}
+
+function renderTraceTemplate(letter, container) {
+  const strokes = (window.CHAR_PATHS && window.CHAR_PATHS[letter]) || [];
+  container.innerHTML = '';
+
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 100 140');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  strokes.forEach(d => {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#e9ecef');
+    path.setAttribute('stroke-width', '34');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(path);
+
+    // A subtle dashed inner guide along the path's centerline so it's
+    // obvious which way the stroke runs.
+    const guide = document.createElementNS(SVG_NS, 'path');
+    guide.setAttribute('d', d);
+    guide.setAttribute('fill', 'none');
+    guide.setAttribute('stroke', '#ced4da');
+    guide.setAttribute('stroke-width', '1.5');
+    guide.setAttribute('stroke-dasharray', '3 3');
+    guide.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(guide);
+  });
+
+  container.appendChild(svg);
+}
+
+function resetTraceCanvas() {
+  // Match canvas internal pixels to its CSS box (×DPR for sharpness)
+  const rect = traceCanvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  traceCanvas.width  = Math.max(1, Math.round(rect.width * dpr));
+  traceCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+  // setTransform replaces any prior scale (avoids compounding across resets)
+  traceCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  traceCtx.clearRect(0, 0, rect.width, rect.height);
+  traceCtx.lineWidth = 18;
+  traceCtx.lineCap = 'round';
+  traceCtx.lineJoin = 'round';
+  traceCtx.strokeStyle = TRACE_COLORS[traceLetterIdx % TRACE_COLORS.length];
+}
+
+let isTracing = false;
+function tracePoint(e) {
+  const rect = traceCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+traceCanvas.addEventListener('pointerdown', e => {
+  isTracing = true;
+  traceCanvas.setPointerCapture(e.pointerId);
+  const p = tracePoint(e);
+  traceCtx.beginPath();
+  traceCtx.moveTo(p.x, p.y);
+  // Dot in case they just tap-and-release
+  traceCtx.lineTo(p.x + 0.01, p.y + 0.01);
+  traceCtx.stroke();
+});
+traceCanvas.addEventListener('pointermove', e => {
+  if (!isTracing) return;
+  const p = tracePoint(e);
+  traceCtx.lineTo(p.x, p.y);
+  traceCtx.stroke();
+});
+const stopTracing = (e) => {
+  if (!isTracing) return;
+  isTracing = false;
+  try { traceCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+};
+traceCanvas.addEventListener('pointerup', stopTracing);
+traceCanvas.addEventListener('pointercancel', stopTracing);
+traceCanvas.addEventListener('pointerleave', stopTracing);
+
+// Re-fit the canvas if the window resizes while a card is shown
+window.addEventListener('resize', () => {
+  if (screens['tracing-mode'].classList.contains('active')) resetTraceCanvas();
+});
+
+document.getElementById('trace-clear').addEventListener('click', resetTraceCanvas);
+document.getElementById('trace-say').addEventListener('click', () => {
+  const letter = traceLetters[traceLetterIdx];
+  const name = (window.LETTER_NAMES && window.LETTER_NAMES[letter]) || letter;
+  say(`${name}.`, { rate: 0.85, pitch: 1.25 });
+});
+document.getElementById('trace-next').addEventListener('click', () => {
+  if (traceLetterIdx < traceLetters.length - 1) {
+    showTraceLetter(traceLetterIdx + 1);
+  } else {
+    // Last letter — celebrate the whole name!
+    celebrate();
+    say(`You wrote your name! ${traceLetters.join('')}!`, { rate: 0.9, pitch: 1.3 });
+    setTimeout(() => showScreen('tracing-menu'), 2400);
+  }
+});
 
 // ====== Voice priming ======
 // Mobile browsers require a user gesture before TTS will work. The first tap

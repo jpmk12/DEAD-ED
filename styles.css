@@ -178,6 +178,7 @@ button {
 .tile-look     { background: linear-gradient(160deg, #fff0d6, #ffb380); }
 .tile-rhyming  { background: linear-gradient(160deg, #ffe8f0, #ff8fab); }
 .tile-shapes   { background: linear-gradient(160deg, #e3fafc, #66d9e8); }
+.tile-name     { background: linear-gradient(160deg, #ffd8d0, #ff9b8b); }
 
 .tile-locked {
   opacity: 0.55;
@@ -362,6 +363,131 @@ button {
   line-height: 1;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
   animation: dinoPop 0.5s ease both;
+}
+
+/* ====== Name Tracing ====== */
+.name-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+}
+.name-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+}
+.name-input {
+  font-family: inherit;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  padding: 14px 20px;
+  border: 4px solid #fff;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #ff6b6b;
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.15);
+  width: 100%;
+  outline: none;
+  transition: transform 0.1s ease;
+}
+.name-input:focus {
+  border-color: #ffa94d;
+  transform: translateY(-2px);
+}
+#start-tracing-btn {
+  cursor: pointer;
+  width: 100%;
+  max-width: 280px;
+}
+
+/* Progress chips above the trace card */
+.trace-progress {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 8px 0 14px;
+  z-index: 1;
+}
+.trace-chip {
+  width: clamp(36px, 8vw, 48px);
+  height: clamp(36px, 8vw, 48px);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  font-weight: 900;
+  color: #aaa;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+}
+.trace-chip.done {
+  background: linear-gradient(160deg, #b2f2bb, #51cf66);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.18);
+}
+.trace-chip.current {
+  background: linear-gradient(160deg, #ffe066, #fab005);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.18);
+  transform: scale(1.18) translateY(-3px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Trace card: SVG template + canvas overlay, stacked */
+.trace-card {
+  position: relative;
+  width: clamp(260px, 70vw, 440px);
+  height: clamp(360px, 95vw, 620px);
+  background: #fff;
+  border-radius: 28px;
+  box-shadow:
+    0 10px 0 rgba(0, 0, 0, 0.12),
+    0 16px 30px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  z-index: 1;
+  animation: cardPop 0.45s ease;
+}
+.trace-template {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.trace-template svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+#trace-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* prevents page scrolling while drawing */
+  cursor: crosshair;
+}
+
+.trace-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 16px;
+  z-index: 1;
 }
 
 /* ====== Shapes ====== */
