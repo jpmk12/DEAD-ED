@@ -24,10 +24,28 @@ document.querySelectorAll('.toggle-numbers .case-btn').forEach(btn => {
 // Emoji-based extras used for the confetti burst (cheap to render lots of).
 const EXTRAS = ['🥚', '🌴', '🌋', '🦴', '⭐', '🦖', '🦕'];
 
-// Shared monotonic id so a stale "This is ... <thing>" sequence (e.g. from
-// a previous card) can detect it's been superseded by a newer one and stop
-// queueing utterances. Used by speakNumber / speakLetter / speakShape.
+// Shared monotonic ids so stale async speech sequences (in learn modes,
+// phonics, rhyming) can detect they've been superseded and stop queueing
+// more utterances. Bumped on speech cancel / new round / back navigation.
 let learnPlayToken = 0;
+let phonicsPlayToken = 0;
+let rhymePlayToken = 0;
+
+// All "next round" / "speak prompt" / "return to menu" setTimeouts are
+// routed through this single slot so they can be cancelled on navigation
+// (otherwise a queued nextRound would fire after the user backed out,
+// rebuilding the test on the wrong screen and overriding fresh state).
+let pendingScreenTimer = null;
+function scheduleScreenAction(fn, delay) {
+  clearTimeout(pendingScreenTimer);
+  pendingScreenTimer = setTimeout(fn, delay);
+}
+function cancelAllSpeech() {
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  learnPlayToken++;
+  phonicsPlayToken++;
+  rhymePlayToken++;
+}
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -106,8 +124,10 @@ if ('speechSynthesis' in window) {
 
 function say(text, { rate = 0.85, pitch = 1.2 } = {}) {
   if (!('speechSynthesis' in window)) return;
-  // Cancel anything mid-speech so taps feel responsive
-  speechSynthesis.cancel();
+  // Cancel anything mid-speech AND invalidate any in-flight async sequence
+  // (otherwise a chunked sequence currently in `await sleep(...)` resumes
+  // when its sleep ends and queues more utterances on top of this one).
+  cancelAllSpeech();
   const u = new SpeechSynthesisUtterance(text);
   if (preferredVoice) u.voice = preferredVoice;
   u.rate = rate;
@@ -255,7 +275,10 @@ document.querySelectorAll('[data-shapes-mode]').forEach(btn => {
 // back buttons
 document.querySelectorAll('[data-back]').forEach(btn => {
   btn.addEventListener('click', () => {
-    speechSynthesis.cancel();
+    // Kill any speech AND any pending "next round" / "speak prompt" timers
+    // so they don't fire on the next screen and mess with its state.
+    cancelAllSpeech();
+    clearTimeout(pendingScreenTimer);
     showScreen(btn.dataset.back);
   });
 });
@@ -387,7 +410,7 @@ function nextTestRound() {
   });
 
   // After a tiny beat, say the prompt
-  setTimeout(() => sayTestPrompt(), 350);
+  scheduleScreenAction(sayTestPrompt, 350);
 }
 
 function sayTestPrompt() {
@@ -408,7 +431,7 @@ function handleChoice(btn, value) {
     scoreCorrectEl.textContent = String(scoreCorrect);
     say(`Yes! ${NUMBER_WORDS[currentAnswer]}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    setTimeout(nextTestRound, 1800);
+    scheduleScreenAction(nextTestRound, 1800);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
@@ -479,6 +502,12 @@ function nextLookRound() {
   lookDinosEl.innerHTML = '';
   lookCardEl.classList.remove('revealed');
 
+  // Re-trigger the card pop so two-in-a-row identical numerals still feel
+  // like a "new" round (otherwise repeat picks look frozen).
+  lookCardEl.classList.remove('pop');
+  void lookCardEl.offsetWidth;
+  lookCardEl.classList.add('pop');
+
   lookAccepting = true;
 }
 
@@ -500,7 +529,7 @@ function handleLookAnswer(knew) {
 
   if (knew) celebrate();
 
-  setTimeout(nextLookRound, 2000);
+  scheduleScreenAction(nextLookRound, 2000);
 }
 
 document.getElementById('look-knew').addEventListener('click', () => handleLookAnswer(true));
@@ -614,7 +643,7 @@ function nextLettersTestRound() {
     lettersChoicesEl.appendChild(btn);
   });
 
-  setTimeout(sayLettersTestPrompt, 350);
+  scheduleScreenAction(sayLettersTestPrompt, 350);
 }
 
 function sayLettersTestPrompt() {
@@ -639,7 +668,7 @@ function handleLetterChoice(btn, value) {
     const lead = letterCase === 'lower' ? 'lowercase' : 'capital';
     say(`Yes! ${lead} ${name}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    setTimeout(nextLettersTestRound, 1800);
+    scheduleScreenAction(nextLettersTestRound, 1800);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
@@ -667,9 +696,7 @@ function sayAsync(text, opts = {}) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 let phonicsIdx = 0;
-// Monotonic id so a stale speak-loop from the previous card can detect
-// that it's been superseded and stop touching the DOM.
-let phonicsPlayToken = 0;
+// phonicsPlayToken declared at top of file (shared with cancelAllSpeech)
 
 const phonicsLettersEl = document.getElementById('phonics-letters');
 const phonicsEmojiEl   = document.getElementById('phonics-emoji');
@@ -769,10 +796,12 @@ function nextPhonicsTestRound() {
   const pool = window.PHONICS_WORDS;
   phonicsAnswer = pool[Math.floor(Math.random() * pool.length)];
 
-  // Pick 3 distinct wrong choices
+  // Pick distinct wrong choices, capped at the pool size to avoid an
+  // infinite loop if the word list is ever trimmed below 4.
   const set = new Set([phonicsAnswer.word]);
   const choices = [phonicsAnswer];
-  while (choices.length < 4) {
+  const target = Math.min(4, pool.length);
+  while (choices.length < target) {
     const c = pool[Math.floor(Math.random() * pool.length)];
     if (!set.has(c.word)) { set.add(c.word); choices.push(c); }
   }
@@ -790,7 +819,7 @@ function nextPhonicsTestRound() {
     phonicsChoicesEl.appendChild(btn);
   });
 
-  setTimeout(sayPhonicsTestPrompt, 350);
+  scheduleScreenAction(sayPhonicsTestPrompt, 350);
 }
 
 async function sayPhonicsTestPrompt() {
@@ -822,7 +851,7 @@ function handlePhonicsChoice(btn, item) {
     phonicsCorrectEl.textContent = String(phonicsCorrect);
     say(`Yes! ${phonicsAnswer.word}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    setTimeout(nextPhonicsTestRound, 1800);
+    scheduleScreenAction(nextPhonicsTestRound, 1800);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
@@ -856,7 +885,7 @@ const rhymeVerdictEl  = document.getElementById('rhyme-verdict');
 const rhymingCardEl   = document.getElementById('rhyming-card');
 
 let rhymeIdx = 0;
-let rhymePlayToken = 0;
+// rhymePlayToken declared at top of file (shared with cancelAllSpeech)
 
 function rhymingShow(idx) {
   const total = window.RHYME_PAIRS.length;
@@ -940,7 +969,7 @@ function nextRhymingTestRound() {
   rhymeYesBtn.classList.remove('correct', 'wrong');
   rhymeNoBtn.classList.remove('correct', 'wrong');
 
-  setTimeout(() => speakRhymePair(rhymeAnswer), 350);
+  scheduleScreenAction(() => speakRhymePair(rhymeAnswer), 350);
 }
 
 document.getElementById('rhyming-test-say').addEventListener('click', () => {
@@ -961,7 +990,7 @@ function handleRhymeAnswer(btn, saidYes) {
     say(saidYes ? 'Yes! They rhyme! Great job!' : "Right! They don't rhyme! Great job!",
         { rate: 0.9, pitch: 1.3 });
     celebrate();
-    setTimeout(nextRhymingTestRound, 1800);
+    scheduleScreenAction(nextRhymingTestRound, 1800);
   } else {
     btn.classList.add('wrong');
     say('Try again!', { rate: 0.95, pitch: 1.2 });
@@ -1039,10 +1068,12 @@ function nextShapesTestRound() {
   const pool = window.SHAPES;
   shapesAnswer = pool[Math.floor(Math.random() * pool.length)];
 
-  // Pick 3 distinct wrong choices
+  // Pick distinct wrong choices, capped at the pool size to avoid an
+  // infinite loop if the shape list is ever trimmed below 4.
   const set = new Set([shapesAnswer.name]);
   const choices = [shapesAnswer];
-  while (choices.length < 4) {
+  const target = Math.min(4, pool.length);
+  while (choices.length < target) {
     const c = pool[Math.floor(Math.random() * pool.length)];
     if (!set.has(c.name)) { set.add(c.name); choices.push(c); }
   }
@@ -1058,7 +1089,7 @@ function nextShapesTestRound() {
     shapesChoicesEl.appendChild(btn);
   });
 
-  setTimeout(sayShapeTestPrompt, 350);
+  scheduleScreenAction(sayShapeTestPrompt, 350);
 }
 
 function sayShapeTestPrompt() {
@@ -1080,7 +1111,7 @@ function handleShapeChoice(btn, shape) {
     shapesCorrectEl.textContent = String(shapesCorrect);
     say(`Yes! ${shapesAnswer.name}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    setTimeout(nextShapesTestRound, 1800);
+    scheduleScreenAction(nextShapesTestRound, 1800);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
@@ -1115,6 +1146,12 @@ function nextShapesLookRound() {
   shapesLookNameEl.textContent  = shapesLookAnswer.name;
   shapesLookCardEl.classList.remove('revealed');
 
+  // Re-trigger the card pop so back-to-back identical shape picks still
+  // feel like a "new" round.
+  shapesLookCardEl.classList.remove('pop');
+  void shapesLookCardEl.offsetWidth;
+  shapesLookCardEl.classList.add('pop');
+
   shapesLookAccepting = true;
 }
 
@@ -1134,7 +1171,7 @@ function handleShapesLookAnswer(knew) {
 
   if (knew) celebrate();
 
-  setTimeout(nextShapesLookRound, 2000);
+  scheduleScreenAction(nextShapesLookRound, 2000);
 }
 
 document.getElementById('shapes-look-knew').addEventListener('click', () => handleShapesLookAnswer(true));
@@ -1150,12 +1187,20 @@ document.getElementById('shapes-look-help').addEventListener('click', () => hand
 const KID_NAME_KEY = 'dinoLearnKidName';
 const KID_NAME_DEFAULT = 'DECLAN';
 function getKidName() {
-  const stored = (localStorage.getItem(KID_NAME_KEY) || '').toUpperCase();
-  return stored || KID_NAME_DEFAULT;
+  // localStorage throws in Safari Private Browsing / when storage is disabled.
+  // Falling back to the default keeps the Name app usable instead of breaking
+  // navigation when the parent first taps the tile.
+  try {
+    const stored = (localStorage.getItem(KID_NAME_KEY) || '').toUpperCase();
+    return stored || KID_NAME_DEFAULT;
+  } catch (_) { return KID_NAME_DEFAULT; }
 }
 function setKidName(name) {
   const cleaned = String(name || '').toUpperCase().replace(/[^A-Z]/g, '');
-  if (cleaned) localStorage.setItem(KID_NAME_KEY, cleaned);
+  if (cleaned) {
+    try { localStorage.setItem(KID_NAME_KEY, cleaned); }
+    catch (_) { /* private mode / quota — name still works this session */ }
+  }
   return cleaned;
 }
 
@@ -1297,11 +1342,31 @@ const stopTracing = (e) => {
 };
 traceCanvas.addEventListener('pointerup', stopTracing);
 traceCanvas.addEventListener('pointercancel', stopTracing);
-traceCanvas.addEventListener('pointerleave', stopTracing);
+// (No pointerleave handler — setPointerCapture on pointerdown means events
+// keep flowing even when the finger drags off the canvas. Releasing on
+// pointerleave would prematurely end the stroke for any kid who slides
+// past the edge mid-trace, which they do all the time.)
 
-// Re-fit the canvas if the window resizes while a card is shown
+// Re-fit the canvas if the window resizes while a card is shown — but
+// snapshot the existing ink first and restore it scaled, so the kid
+// doesn't lose mid-trace progress when the mobile address bar collapses.
 window.addEventListener('resize', () => {
-  if (screens['tracing-mode'].classList.contains('active')) resetTraceCanvas();
+  if (!screens['tracing-mode'].classList.contains('active')) return;
+  const oldW = traceCanvas.width, oldH = traceCanvas.height;
+  let snapshot = null;
+  if (oldW > 0 && oldH > 0) {
+    const tmp = document.createElement('canvas');
+    tmp.width = oldW;
+    tmp.height = oldH;
+    tmp.getContext('2d').drawImage(traceCanvas, 0, 0);
+    snapshot = tmp;
+  }
+  resetTraceCanvas(); // clears + rescales for new dimensions
+  if (snapshot) {
+    const rect = traceCanvas.getBoundingClientRect();
+    // ctx already has setTransform(dpr,...) — drawing is in CSS pixels
+    traceCtx.drawImage(snapshot, 0, 0, rect.width, rect.height);
+  }
 });
 
 document.getElementById('trace-clear').addEventListener('click', resetTraceCanvas);
@@ -1317,7 +1382,7 @@ document.getElementById('trace-next').addEventListener('click', () => {
     // Last letter — celebrate the whole name!
     celebrate();
     say(`You wrote your name! ${traceLetters.join('')}!`, { rate: 0.9, pitch: 1.3 });
-    setTimeout(() => showScreen('tracing-menu'), 2400);
+    scheduleScreenAction(() => showScreen('tracing-menu'), 2400);
   }
 });
 
