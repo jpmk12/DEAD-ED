@@ -40,6 +40,11 @@ function scheduleScreenAction(fn, delay) {
   clearTimeout(pendingScreenTimer);
   pendingScreenTimer = setTimeout(fn, delay);
 }
+
+// How long to linger after a correct answer (praise "...Great job!" plays
+// during this window) before moving on to the next question. Long enough
+// that the next prompt doesn't step on the praise.
+const NEXT_ROUND_DELAY = 2800;
 function cancelAllSpeech() {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   learnPlayToken++;
@@ -431,7 +436,7 @@ function handleChoice(btn, value) {
     scoreCorrectEl.textContent = String(scoreCorrect);
     say(`Yes! ${NUMBER_WORDS[currentAnswer]}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    scheduleScreenAction(nextTestRound, 1800);
+    scheduleScreenAction(nextTestRound, NEXT_ROUND_DELAY);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
@@ -668,7 +673,7 @@ function handleLetterChoice(btn, value) {
     const lead = letterCase === 'lower' ? 'lowercase' : 'capital';
     say(`Yes! ${lead} ${name}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    scheduleScreenAction(nextLettersTestRound, 1800);
+    scheduleScreenAction(nextLettersTestRound, NEXT_ROUND_DELAY);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
@@ -851,7 +856,7 @@ function handlePhonicsChoice(btn, item) {
     phonicsCorrectEl.textContent = String(phonicsCorrect);
     say(`Yes! ${phonicsAnswer.word}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    scheduleScreenAction(nextPhonicsTestRound, 1800);
+    scheduleScreenAction(nextPhonicsTestRound, NEXT_ROUND_DELAY);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
@@ -990,7 +995,7 @@ function handleRhymeAnswer(btn, saidYes) {
     say(saidYes ? 'Yes! They rhyme! Great job!' : "Right! They don't rhyme! Great job!",
         { rate: 0.9, pitch: 1.3 });
     celebrate();
-    scheduleScreenAction(nextRhymingTestRound, 1800);
+    scheduleScreenAction(nextRhymingTestRound, NEXT_ROUND_DELAY);
   } else {
     btn.classList.add('wrong');
     say('Try again!', { rate: 0.95, pitch: 1.2 });
@@ -1111,7 +1116,7 @@ function handleShapeChoice(btn, shape) {
     shapesCorrectEl.textContent = String(shapesCorrect);
     say(`Yes! ${shapesAnswer.name}! Great job!`, { rate: 0.9, pitch: 1.3 });
     celebrate();
-    scheduleScreenAction(nextShapesTestRound, 1800);
+    scheduleScreenAction(nextShapesTestRound, NEXT_ROUND_DELAY);
   } else {
     btn.classList.add('wrong');
     say(`Try again!`, { rate: 0.95, pitch: 1.2 });
