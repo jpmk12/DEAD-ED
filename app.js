@@ -24,6 +24,11 @@ document.querySelectorAll('.toggle-numbers .case-btn').forEach(btn => {
 // Emoji-based extras used for the confetti burst (cheap to render lots of).
 const EXTRAS = ['🥚', '🌴', '🌋', '🦴', '⭐', '🦖', '🦕'];
 
+// Shared monotonic id so a stale "This is ... <thing>" sequence (e.g. from
+// a previous card) can detect it's been superseded by a newer one and stop
+// queueing utterances. Used by speakNumber / speakLetter / speakShape.
+let learnPlayToken = 0;
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // Renders a string of characters (digits or uppercase letters) as an SVG
@@ -315,8 +320,14 @@ function renderDinoRow(container, count) {
   container.appendChild(extras);
 }
 
-function speakNumber(n) {
-  say(`This is the number ${NUMBER_WORDS[n]}.`, { rate: 0.8, pitch: 1.25 });
+async function speakNumber(n) {
+  speechSynthesis.cancel();
+  const token = ++learnPlayToken;
+  await sayAsync('This is the number', { rate: 0.85, pitch: 1.25 });
+  if (token !== learnPlayToken) return;
+  await sleep(450);
+  if (token !== learnPlayToken) return;
+  await sayAsync(`${NUMBER_WORDS[n]}.`, { rate: 0.75, pitch: 1.3 });
 }
 
 document.getElementById('learn-prev').addEventListener('click', () => {
@@ -540,13 +551,24 @@ function lettersShow(idx) {
   speakLetter(upper);
 }
 
-function speakLetter(letter) {
+async function speakLetter(letter) {
+  speechSynthesis.cancel();
+  const token = ++learnPlayToken;
   const info = window.LETTER_INFO[letter];
   const name = window.LETTER_NAMES[letter];
-  const lead = letterCase === 'lower'
-    ? `This is lowercase ${name}.`
-    : `This is capital ${name}.`;
-  say(`${lead} ${name} is for ${info.word}.`, { rate: 0.8, pitch: 1.25 });
+  const lead = letterCase === 'lower' ? 'This is lowercase' : 'This is capital';
+
+  // Chunk the speech so the kid hears:
+  //   "This is capital"  …pause…  "A"  …pause…  "A is for Apple."
+  await sayAsync(lead, { rate: 0.85, pitch: 1.25 });
+  if (token !== learnPlayToken) return;
+  await sleep(450);
+  if (token !== learnPlayToken) return;
+  await sayAsync(name, { rate: 0.7, pitch: 1.3 });
+  if (token !== learnPlayToken) return;
+  await sleep(550);
+  if (token !== learnPlayToken) return;
+  await sayAsync(`${name} is for ${info.word}.`, { rate: 0.85, pitch: 1.25 });
 }
 
 document.getElementById('letters-prev').addEventListener('click', () => lettersShow(letterIdx - 1));
@@ -978,10 +1000,16 @@ function shapesShow(idx) {
   speakShape(shape);
 }
 
-function speakShape(shape) {
+async function speakShape(shape) {
   // "A" vs "An" — Oval is the only vowel-starter
   const article = /^[aeiou]/i.test(shape.name) ? 'an' : 'a';
-  say(`This is ${article} ${shape.name.toLowerCase()}.`, { rate: 0.85, pitch: 1.25 });
+  speechSynthesis.cancel();
+  const token = ++learnPlayToken;
+  await sayAsync(`This is ${article}`, { rate: 0.85, pitch: 1.25 });
+  if (token !== learnPlayToken) return;
+  await sleep(450);
+  if (token !== learnPlayToken) return;
+  await sayAsync(`${shape.name.toLowerCase()}.`, { rate: 0.75, pitch: 1.3 });
 }
 
 document.getElementById('shapes-prev').addEventListener('click', () => shapesShow(shapeIdx - 1));
