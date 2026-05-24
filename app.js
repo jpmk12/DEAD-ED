@@ -803,6 +803,23 @@ function handlePhonicsChoice(btn, item) {
 }
 
 // ====== RHYMING LEARN MODE ======
+// Display mode toggle on the Rhyming menu — 'show' renders the printed
+// words alongside emoji (default), 'ears' hides the words so the kid has
+// to listen for the matching sound instead of pattern-matching letters.
+let rhymeMode = 'show'; // 'show' | 'ears'
+
+document.querySelectorAll('.toggle-rhyme .case-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-rhyme .case-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    rhymeMode = btn.dataset.rhymeMode;
+  });
+});
+
+function applyRhymeMode(cardEl) {
+  cardEl.classList.toggle('ears-only', rhymeMode === 'ears');
+}
+
 const rhymeEmoji1El   = document.getElementById('rhyme-emoji-1');
 const rhymeText1El    = document.getElementById('rhyme-text-1');
 const rhymeEmoji2El   = document.getElementById('rhyme-emoji-2');
@@ -825,6 +842,8 @@ function rhymingShow(idx) {
 
   rhymeVerdictEl.textContent = pair.rhyme ? 'They Rhyme!' : "They Don't Rhyme";
   rhymeVerdictEl.className   = 'rhyme-verdict ' + (pair.rhyme ? 'yes' : 'no');
+
+  applyRhymeMode(rhymingCardEl);
 
   // Replay the verdict pop animation
   rhymeVerdictEl.style.animation = 'none';
@@ -886,6 +905,8 @@ function nextRhymingTestRound() {
   rhymeTestText1El.textContent  = rhymeAnswer.w1.toLowerCase();
   rhymeTestEmoji2El.textContent = rhymeAnswer.e2;
   rhymeTestText2El.textContent  = rhymeAnswer.w2.toLowerCase();
+
+  applyRhymeMode(document.getElementById('rhyming-test-card'));
 
   // Reset any lingering button flash from the previous round
   rhymeYesBtn.classList.remove('correct', 'wrong');

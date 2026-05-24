@@ -348,6 +348,10 @@ button {
 .case-toggle.toggle-numbers .case-btn.active {
   background: linear-gradient(160deg, #ffd43b, #ffa94d);
 }
+/* Rhyming uses pink to match its tile */
+.case-toggle.toggle-rhyme .case-btn.active {
+  background: linear-gradient(160deg, #ff8fab, #c2255c);
+}
 .case-btn:active:not(.active) {
   transform: scale(0.95);
 }
@@ -423,6 +427,12 @@ button {
   color: #444;
   text-transform: lowercase;
   letter-spacing: 1px;
+  transition: opacity 0.25s ease;
+}
+/* Ears-only mode: hide the printed word so the kid relies on listening
+   for the matching sound, not visually matching the letter endings. */
+.rhyme-card.ears-only .rhyme-text {
+  opacity: 0;
 }
 .rhyme-vs {
   font-size: clamp(2rem, 5vw, 3rem);
