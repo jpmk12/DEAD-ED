@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/hero.png" alt="Dino Learn — six fun ways to learn before kindergarten: Counting, Letters, Phonics, Rhyming, Shapes, Tracing" width="100%" />
+</p>
+
 # Dino Learn
 
 A web-based learning app for preschoolers (ages ~3–6), built as six bite-sized

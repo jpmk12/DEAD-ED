@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!--
+  Hero/thumbnail source for the Dino Learn README.
+  Renders at 1200x630 (Open Graph / GitHub social-card friendly).
+  Screenshot with:  NODE_PATH=$(npm root -g) node images/render-hero.js
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1200px; height: 630px; overflow: hidden;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', system-ui, sans-serif;
+  }
+  body {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.45), transparent 50%),
+      linear-gradient(180deg, #87ceeb 0%, #b6e3ff 40%, #ffe6a7 80%, #f4a460 100%);
+    position: relative;
+  }
+  svg { display: block; width: 100%; height: 100%; }
+
+  /* ===== Title block ===== */
+  .header {
+    position: absolute; top: 30px; left: 0; right: 0;
+    text-align: center; z-index: 5;
+  }
+  .title {
+    display: inline-flex; align-items: center; gap: 22px;
+    white-space: nowrap;
+    font-size: 76px; font-weight: 900;
+    color: #fff;
+    text-shadow:
+      4px 4px 0 #ff6b6b,
+      8px 8px 0 rgba(0, 0, 0, 0.18);
+    letter-spacing: 3px;
+    line-height: 1;
+  }
+  .title-dino {
+    width: 90px; height: 90px;
+    display: inline-block;
+    filter: drop-shadow(0 6px 6px rgba(0,0,0,0.22));
+  }
+  .title-dino.flip { transform: scaleX(-1); }
+  .subtitle {
+    font-size: 26px; font-weight: 700; color: #fff;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+    margin-top: 16px;
+    white-space: nowrap;
+  }
+
+  /* ===== Sample card strip ===== */
+  .cards {
+    position: absolute; top: 200px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 18px; align-items: center;
+    z-index: 4;
+  }
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    width: 168px; height: 232px;
+    box-shadow:
+      0 10px 0 rgba(0, 0, 0, 0.13),
+      0 18px 28px rgba(0, 0, 0, 0.20);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 14px 10px;
+    gap: 8px;
+    position: relative;
+  }
+  .card.tilt-l { transform: rotate(-4deg) translateY(-8px); }
+  .card.tilt-r { transform: rotate(4deg)  translateY(-8px); }
+  .card.featured { transform: scale(1.08); z-index: 5; }
+  .card-label {
+    font-size: 18px; font-weight: 900;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* Card 1: Counting */
+  .card-count .big {
+    font-size: 100px; font-weight: 900; line-height: 0.95;
+    background: linear-gradient(160deg, #ff6b6b, #ffa94d, #ffd43b);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(3px 4px 0 rgba(0,0,0,0.12));
+  }
+  .card-count .dinos { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+  .card-count .dinos span { width: 22px; height: 22px; display: inline-block; }
+
+  /* Card 2: Letter */
+  .card-letter .big {
+    font-size: 120px; font-weight: 900; line-height: 1;
+    color: #b197fc;
+    text-shadow: 3px 4px 0 rgba(0,0,0,0.12);
+  }
+  .card-letter .sub { font-size: 15px; color: #888; font-weight: 700; }
+
+  /* Card 3: Phonics CAT */
+  .card-phonics .boxes { display: flex; gap: 6px; }
+  .card-phonics .box {
+    width: 34px; height: 34px;
+    background: linear-gradient(160deg, #fff3bf, #ffd43b);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.18);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+  }
+  .card-phonics .box.active {
+    background: linear-gradient(160deg, #ff8787, #ff6b6b);
+    transform: scale(1.18) translateY(-3px);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+  }
+  .card-phonics .emoji { font-size: 48px; line-height: 1; }
+
+  /* Card 4: Shapes */
+  .card-shape .grid {
+    display: grid; grid-template-columns: 56px 56px;
+    gap: 8px;
+  }
+  .card-shape .grid svg { width: 56px; height: 56px; }
+
+  /* Card 5: Rhyming */
+  .card-rhyme .pair { display: flex; align-items: center; gap: 6px; }
+  .card-rhyme .word {
+    background: linear-gradient(160deg, #fff8e1, #ffe082);
+    border-radius: 12px;
+    padding: 6px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.12);
+  }
+  .card-rhyme .word .em { font-size: 26px; line-height: 1; }
+  .card-rhyme .word .txt { font-size: 11px; font-weight: 900; color: #555; }
+  .card-rhyme .vs { font-size: 16px; font-weight: 900; color: #999; }
+  .card-rhyme .verdict {
+    font-size: 16px; font-weight: 900; color: #2f9e44;
+    text-shadow: 2px 2px 0 rgba(255,255,255,0.6);
+    margin-top: 4px;
+  }
+
+  /* ===== Floating background dinos ===== */
+  .float {
+    position: absolute; z-index: 1;
+    display: inline-block;
+    filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.18));
+  }
+  .float.f1 { left: 22px;  top: 165px;  width: 86px;  height: 86px;  transform: rotate(-12deg); }
+  .float.f2 { right: 22px; top: 165px;  width: 96px;  height: 96px;  transform: rotate(14deg); }
+  .float.f3 { left: 18px;  bottom: 80px; width: 110px; height: 110px; transform: rotate(-6deg); }
+  .float.f4 { right: 18px; bottom: 78px; width: 116px; height: 116px; transform: rotate(8deg) scaleX(-1); }
+
+  /* Sparkles */
+  .spark {
+    position: absolute; opacity: 0.9;
+    font-size: 30px;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.18));
+    z-index: 2;
+  }
+
+  /* ===== Footer ribbon ===== */
+  .ribbon {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(255, 107, 107, 0.92);
+    color: #fff;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 22px; font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.25);
+    z-index: 6;
+    box-shadow: 0 -4px 0 rgba(0,0,0,0.08);
+  }
+</style>
+</head>
+<body>
+
+  <!-- Title -->
+  <div class="header">
+    <div class="title">
+      <span class="title-dino" id="title-dino-1"></span>
+      <span>Dino Learn</span>
+      <span class="title-dino flip" id="title-dino-2"></span>
+    </div>
+    <div class="subtitle">Six fun ways to learn before kindergarten</div>
+  </div>
+
+  <!-- Sparkles scattered around -->
+  <span class="spark" style="left: 140px; top: 50px;">✨</span>
+  <span class="spark" style="right: 150px; top: 40px;">⭐</span>
+  <span class="spark" style="left: 240px; top: 200px;">✨</span>
+  <span class="spark" style="right: 240px; top: 200px;">⭐</span>
+
+  <!-- Sample cards (5 across) -->
+  <div class="cards">
+    <!-- Counting -->
+    <div class="card card-count tilt-l">
+      <div class="big">7</div>
+      <div class="dinos" id="count-dinos"></div>
+      <div class="card-label" style="color:#e67700;">Count</div>
+    </div>
+
+    <!-- Letters -->
+    <div class="card card-letter">
+      <div class="big">A</div>
+      <div class="sub">A is for 🍎</div>
+      <div class="card-label" style="color:#7048e8;">Letters</div>
+    </div>
+
+    <!-- Phonics CAT (featured/center) -->
+    <div class="card card-phonics featured">
+      <div class="boxes">
+        <div class="box">C</div>
+        <div class="box active">A</div>
+        <div class="box">T</div>
+      </div>
+      <div class="emoji">🐱</div>
+      <div class="card-label" style="color:#1c7ed6;">Phonics</div>
+    </div>
+
+    <!-- Shapes -->
+    <div class="card card-shape">
+      <div class="grid">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="50" r="40" fill="#ff8787" stroke="#c92a2a" stroke-width="5"/></svg>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><polygon points="50,10 61,38 90,40 67,60 76,90 50,72 24,90 33,60 10,40 39,38" fill="#ffe066" stroke="#f08c00" stroke-width="5" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><polygon points="50,8 92,50 50,92 8,50" fill="#d0bfff" stroke="#6741d9" stroke-width="5" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><path d="M 50 86 C 20 65 5 40 20 22 C 30 12 45 18 50 30 C 55 18 70 12 80 22 C 95 40 80 65 50 86 Z" fill="#ff8fab" stroke="#c2255c" stroke-width="5" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="card-label" style="color:#0c8599;">Shapes</div>
+    </div>
+
+    <!-- Rhyming -->
+    <div class="card card-rhyme tilt-r">
+      <div class="pair">
+        <div class="word"><div class="em">🐱</div><div class="txt">cat</div></div>
+        <div class="vs">&amp;</div>
+        <div class="word"><div class="em">🎩</div><div class="txt">hat</div></div>
+      </div>
+      <div class="verdict">RHYME!</div>
+      <div class="card-label" style="color:#c2255c;">Rhyme</div>
+    </div>
+  </div>
+
+  <!-- Floating dinos at the corners -->
+  <span class="float f1" id="float-1"></span>
+  <span class="float f2" id="float-2"></span>
+  <span class="float f3" id="float-3"></span>
+  <span class="float f4" id="float-4"></span>
+
+  <!-- Footer ribbon -->
+  <div class="ribbon">Counting · Letters · Phonics · Rhyming · Shapes · Tracing</div>
+
+<script src="../dinos.js"></script>
+<script>
+  // Inject the same SVG dinos from the app so the hero matches the actual art.
+  document.getElementById('title-dino-1').innerHTML = window.DINO_SVGS.trex;
+  document.getElementById('title-dino-2').innerHTML = window.DINO_SVGS.bronto;
+  document.getElementById('float-1').innerHTML     = window.DINO_SVGS.trike;
+  document.getElementById('float-2').innerHTML     = window.DINO_SVGS.raptor;
+  document.getElementById('float-3').innerHTML     = window.DINO_SVGS.stego;
+  document.getElementById('float-4').innerHTML     = window.DINO_SVGS.trex;
+
+  // 7 mini dinos under the Counting "7" so it ties the card together
+  const countDinos = document.getElementById('count-dinos');
+  for (let i = 0; i < 7; i++) {
+    const s = document.createElement('span');
+    s.innerHTML = window.DINO_SVGS.stego;
+    countDinos.appendChild(s);
+  }
+</script>
+</body>
+</html>
